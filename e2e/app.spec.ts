@@ -20,7 +20,8 @@ test('opens the complete learning workspace', async ({ page }) => {
   assertNoErrors()
 })
 
-test('runs curl, renders the trace and completes lesson one', async ({ page }) => {
+test('runs curl, renders and copies the selectable trace', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'http://127.0.0.1:5180' })
   const assertNoErrors = await openWithoutConsoleErrors(page)
   const terminal = page.getByLabel('Comando do terminal')
   await terminal.fill('curl -i http://localhost/')
@@ -30,6 +31,18 @@ test('runs curl, renders the trace and completes lesson one', async ({ page }) =
   await expect(page.getByText('server localhost escolhido')).toBeVisible()
   await expect(page.getByLabel('Copiar trace')).toBeVisible()
   await expect(page.locator('.trace-card').first()).toHaveCSS('user-select', 'text')
+  await page.getByRole('button', { name: 'ver tudo' }).click()
+  const title = page.locator('.trace-title').first()
+  const box = await title.boundingBox()
+  if (!box) throw new Error('Trace title has no bounding box')
+  await page.mouse.move(box.x + 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width - 2, box.y + box.height / 2, { steps: 8 })
+  await page.mouse.up()
+  expect(await page.evaluate(() => window.getSelection()?.toString().trim())).not.toBe('')
+  await page.getByLabel('Copiar trace').click()
+  await expect(page.getByLabel('Trace copiado')).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('server localhost escolhido')
   assertNoErrors()
 })
 
