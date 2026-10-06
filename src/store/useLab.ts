@@ -32,7 +32,7 @@ interface LabState {
   markLessonComplete: (id: string) => void
 }
 
-const completedStorageKey = 'nginxlearn:guided-completed'
+const completedStorageKey = 'nginxlearn:guided-v2-completed'
 
 function sessionFor(index: number) {
   const lesson = lessons[index]!

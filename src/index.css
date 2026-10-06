@@ -937,6 +937,64 @@ button {
   font: 8px var(--font-mono);
 }
 
+.knowledge-check {
+  margin-top: 10px;
+}
+
+.knowledge-check > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #d4dde6;
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+.check-options {
+  display: grid;
+  gap: 5px;
+}
+
+.check-options button {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid var(--color-line);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.012);
+  color: #aeb9c5;
+  font-size: 8.5px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.check-options button:hover { border-color: var(--color-line-strong); color: var(--color-fg); }
+
+.check-options button > span {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: var(--color-panel-2);
+  color: var(--color-accent-2);
+  font: 8px var(--font-mono);
+}
+
+.check-options button.wrong {
+  border-color: rgb(255 122 128 / 0.3);
+  color: #e2a4a7;
+  background: rgb(255 122 128 / 0.045);
+}
+
+.check-feedback {
+  margin: 7px 0 0 !important;
+  color: #d99a9f !important;
+  font-size: 8px !important;
+  line-height: 1.45 !important;
+}
+
 .look-for {
   display: flex;
   gap: 7px;

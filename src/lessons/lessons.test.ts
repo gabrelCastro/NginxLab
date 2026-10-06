@@ -33,10 +33,16 @@ describe('beginner guides', () => {
 
   it('explains what to observe and verifies every guided command', () => {
     for (const lesson of lessons) {
-      for (const step of lesson.steps.filter((candidate) => candidate.command || candidate.applyEdit)) {
-        if (step.command) expect(step.lookFor, `${lesson.id}/${step.id}`).toBeTruthy()
+      for (const step of lesson.steps) {
+        expect(Boolean(step.command || step.applyEdit || step.check), `${lesson.id}/${step.id}`).toBe(true)
         expect(step.takeaway, `${lesson.id}/${step.id}`).toBeTruthy()
+        if (step.command) expect(step.lookFor, `${lesson.id}/${step.id}`).toBeTruthy()
         if (step.command) expect(step.verify, `${lesson.id}/${step.id}`).toBeTypeOf('function')
+        if (step.check) {
+          expect(step.check.options, `${lesson.id}/${step.id}`).toHaveLength(3)
+          expect(step.check.correctIndex, `${lesson.id}/${step.id}`).toBeGreaterThanOrEqual(0)
+          expect(step.check.correctIndex, `${lesson.id}/${step.id}`).toBeLessThan(step.check.options.length)
+        }
       }
     }
   })

@@ -9,6 +9,7 @@ export function LessonPanel() {
   const [hintCount, setHintCount] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<string[]>([])
   const [verifiedSteps, setVerifiedSteps] = useState<string[]>([])
+  const [answers, setAnswers] = useState<Record<string, number>>({})
   const [copiedStep, setCopiedStep] = useState<string>()
   const stepStart = useRef({ key: '', eventCount: 0 })
   const index = useLab((state) => state.lessonIndex)
@@ -33,6 +34,7 @@ export function LessonPanel() {
     setHintCount(0)
     setCompletedSteps([])
     setVerifiedSteps([])
+    setAnswers({})
     setCopiedStep(undefined)
     stepStart.current = { key: '', eventCount: 0 }
   }, [lesson.id, lessonRunId])
@@ -63,6 +65,14 @@ export function LessonPanel() {
 
   const runStepCommand = (step: LessonStep) => {
     if (step.command) runCommand(step.command)
+  }
+
+  const answerCheck = (step: LessonStep, answer: number) => {
+    if (!step.check) return
+    setAnswers((current) => ({ ...current, [step.id]: answer }))
+    if (answer === step.check.correctIndex) {
+      setVerifiedSteps((current) => current.includes(step.id) ? current : [...current, step.id])
+    }
   }
 
   const copyCommand = async (id: string, command: string) => {
@@ -109,14 +119,20 @@ export function LessonPanel() {
                     <div className="guided-command"><code>{step.command}</code><button type="button" aria-label={`Copiar comando do passo ${stepIndex + 1}`} onClick={() => void copyCommand(step.id, step.command!)}>{copiedStep === step.id ? <Check size={12} /> : <Copy size={12} />}</button></div>
                     {step.commandParts && <div className="command-parts">{step.commandParts.map((part) => <div key={part.text}><code>{part.text}</code><span>{part.meaning}</span></div>)}</div>}
                   </>}
+                  {step.check && !verified && <div className="knowledge-check">
+                    <div className="learning-phase"><span>2</span> Confira sua compreensão</div>
+                    <strong>{step.check.prompt}</strong>
+                    <div className="check-options">{step.check.options.map((option, optionIndex) => <button type="button" className={answers[step.id] === optionIndex ? 'selected wrong' : ''} key={option} onClick={() => answerCheck(step, optionIndex)}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div>
+                    {answers[step.id] !== undefined && answers[step.id] !== step.check.correctIndex && <p className="check-feedback">Ainda não. Volte à explicação acima, reveja o conceito e tente novamente.</p>}
+                  </div>}
                   {step.lookFor && <div className="look-for"><Eye size={14} /><div><strong>3 · O que observar</strong><span>{step.lookFor}</span></div></div>}
                   {verified ? <>
-                    <div className="result-confirm" role="status"><CheckCircle2 size={16} /><div><strong>Evidência encontrada</strong><span>{step.takeaway ?? 'O resultado esperado apareceu. Relacione-o com a explicação antes de continuar.'}</span></div></div>
+                    <div className="result-confirm" role="status"><CheckCircle2 size={16} /><div><strong>{step.check ? 'Compreensão confirmada' : 'Evidência encontrada'}</strong><span>{step.takeaway}</span></div></div>
                     <button type="button" className="guide-action" onClick={() => acknowledge(step.id)}>Entendi o resultado <ChevronRight size={14} /></button>
                     {step.command && <button type="button" className="repeat-action" onClick={() => runStepCommand(step)}><RotateCcw size={12} /> Executar novamente</button>}
                   </> : step.applyEdit ? <button type="button" className="guide-action" onClick={() => applyStepEdit(step)}><PencilLine size={14} />{step.applyEdit.label}</button>
                     : step.command ? <button type="button" className="guide-action" onClick={() => runStepCommand(step)}><Play size={14} />Executar e observar</button>
-                      : <button type="button" className="guide-action" onClick={() => acknowledge(step.id)}>Entendi, continuar <ChevronRight size={14} /></button>}
+                      : !step.check && <button type="button" className="guide-action" onClick={() => acknowledge(step.id)}>Entendi, continuar <ChevronRight size={14} /></button>}
                   {step.command && !verified && <p className="type-yourself">Você também pode digitar o comando no terminal à esquerda.</p>}
                 </div>}
               </section>

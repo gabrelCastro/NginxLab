@@ -240,12 +240,24 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'tour',
       title: 'Conheça a bancada',
-      explanation: 'Você está em um laboratório, não em um servidor real. À esquerda fica o arquivo que diz ao nginx como trabalhar e, abaixo, o terminal. No centro, o palco mostrará cada decisão. Este painel conduz o exercício. Você não precisa decorar nada agora.'
+      explanation: 'Você está em um laboratório, não em um servidor real. À esquerda fica o arquivo que diz ao nginx como trabalhar e, abaixo, o terminal. No centro, o palco mostrará cada decisão. Este painel conduz o exercício. Você não precisa decorar nada agora.',
+      check: {
+        prompt: 'Onde você acompanha as decisões internas tomadas pelo nginx?',
+        options: ['No editor', 'No palco central', 'No seletor de lições'],
+        correctIndex: 1
+      },
+      takeaway: 'O editor contém as regras, o terminal envia ações e o palco transforma o processamento interno em uma sequência visível.'
     },
     {
       id: 'config',
       title: 'Leia a configuração como uma frase',
-      explanation: 'No editor, server significa “um site”. listen 80 diz em qual porta ele recebe visitas. root aponta para a pasta dos arquivos. index diz qual arquivo abrir quando alguém pede apenas /. As chaves agrupam essas regras; o ; encerra cada instrução.'
+      explanation: 'No editor, server significa “um site”. listen 80 diz em qual porta ele recebe visitas. root aponta para a pasta dos arquivos. index diz qual arquivo abrir quando alguém pede apenas /. As chaves agrupam essas regras; o ; encerra cada instrução.',
+      check: {
+        prompt: 'Qual diretiva indica a pasta onde o nginx procurará os arquivos?',
+        options: ['listen', 'root', 'index'],
+        correctIndex: 1
+      },
+      takeaway: 'root define a pasta base. index apenas escolhe o nome do arquivo usado quando a URI aponta para um diretório.'
     },
     {
       id: 'first-request',
@@ -264,7 +276,13 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'read-response',
       title: 'Entenda o que voltou',
-      explanation: 'A primeira linha é o status. Os headers descrevem a resposta — por exemplo, o tipo e o tamanho. Depois da linha vazia vem o corpo: neste caso, o HTML do arquivo. Requisição é o pedido; resposta é o que o servidor devolve.'
+      explanation: 'A primeira linha é o status. Os headers descrevem a resposta — por exemplo, o tipo e o tamanho. Depois da linha vazia vem o corpo: neste caso, o HTML do arquivo. Requisição é o pedido; resposta é o que o servidor devolve.',
+      check: {
+        prompt: 'Em qual parte você encontra o HTML devolvido pelo servidor?',
+        options: ['No status', 'Nos headers', 'No corpo da resposta'],
+        correctIndex: 2
+      },
+      takeaway: 'O status resume o resultado, os headers trazem metadados e o corpo carrega o conteúdo pedido.'
     },
     {
       id: 'compare-404',
@@ -284,7 +302,13 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'two-configs',
       title: 'Separe arquivo editado de configuração ativa',
-      explanation: 'Editar nginx.conf não muda o servidor imediatamente. O nginx continua usando a última configuração carregada. Isso evita que um erro de digitação derrube um site que já funciona.'
+      explanation: 'Editar nginx.conf não muda o servidor imediatamente. O nginx continua usando a última configuração carregada. Isso evita que um erro de digitação derrube um site que já funciona.',
+      check: {
+        prompt: 'Logo depois de editar nginx.conf, qual versão o servidor continua usando?',
+        options: ['A última versão carregada', 'O texto ainda incompleto do editor', 'Nenhuma configuração'],
+        correctIndex: 0
+      },
+      takeaway: 'O arquivo editado é apenas uma proposta até que um reload bem-sucedido o transforme na configuração ativa.'
     },
     {
       id: 'edit-index',
@@ -327,7 +351,13 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'host-concept',
       title: 'Uma porta pode receber vários sites',
-      explanation: 'Dois sites podem compartilhar o mesmo IP e a porta 80. Para saber qual deles queremos, o cliente envia o header Host — como escrever o nome do destinatário no envelope.'
+      explanation: 'Dois sites podem compartilhar o mesmo IP e a porta 80. Para saber qual deles queremos, o cliente envia o header Host — como escrever o nome do destinatário no envelope.',
+      check: {
+        prompt: 'Se dois sites usam o mesmo IP e a porta 80, o que diferencia o destinatário?',
+        options: ['O header Host', 'O corpo da resposta', 'O tamanho do arquivo'],
+        correctIndex: 0
+      },
+      takeaway: 'Host leva o nome do site dentro da requisição e permite ao nginx escolher um server entre vários na mesma porta.'
     },
     {
       id: 'named-host',
@@ -351,14 +381,26 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'host-summary',
       title: 'Guarde a ordem da escolha',
-      explanation: 'Primeiro a porta seleciona os blocos candidatos. Depois o Host é comparado com server_name. Sem correspondência, default_server vence. É assim que um único nginx hospeda muitos domínios.'
+      explanation: 'Primeiro a porta seleciona os blocos candidatos. Depois o Host é comparado com server_name. Sem correspondência, default_server vence. É assim que um único nginx hospeda muitos domínios.',
+      check: {
+        prompt: 'O que acontece quando nenhum server_name corresponde ao Host?',
+        options: ['A conexão sempre falha', 'default_server atende', 'O primeiro arquivo do disco atende'],
+        correctIndex: 1
+      },
+      takeaway: 'A seleção segue porta → Host/server_name → default_server. Essa ordem torna previsível qual site responderá.'
     }
   ],
   'caminhos-e-arquivos': [
     {
       id: 'uri-path',
       title: 'URI não é caminho de disco',
-      explanation: 'A pessoa pede uma URI, como /docs/guia.txt. nginx usa a configuração para transformá-la em um caminho físico. root e alias fazem essa transformação de maneiras diferentes.'
+      explanation: 'A pessoa pede uma URI, como /docs/guia.txt. nginx usa a configuração para transformá-la em um caminho físico. root e alias fazem essa transformação de maneiras diferentes.',
+      check: {
+        prompt: 'O que é /docs/guia.txt quando chega na requisição?',
+        options: ['Uma URI', 'Obrigatoriamente um caminho físico', 'Um header HTTP'],
+        correctIndex: 0
+      },
+      takeaway: 'A URI é o nome pedido pelo cliente. Só depois de aplicar root ou alias o nginx obtém um caminho no sistema de arquivos.'
     },
     {
       id: 'root-path',
@@ -392,7 +434,13 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'location-map',
       title: 'Pense em location como regras de caminho',
-      explanation: 'Cada location é candidata a tratar a URI. nginx não usa simplesmente a primeira do arquivo: ele segue uma ordem específica. O palco testará cada candidata sem esconder as derrotadas.'
+      explanation: 'Cada location é candidata a tratar a URI. nginx não usa simplesmente a primeira do arquivo: ele segue uma ordem específica. O palco testará cada candidata sem esconder as derrotadas.',
+      check: {
+        prompt: 'Como o nginx escolhe uma location?',
+        options: ['Sempre usa a primeira escrita', 'Segue regras de prioridade', 'Escolhe aleatoriamente'],
+        correctIndex: 1
+      },
+      takeaway: 'A posição no arquivo não basta para prever a vencedora: tipo de correspondência e especificidade participam da decisão.'
     },
     {
       id: 'exact-location',
@@ -427,7 +475,13 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'spa-problem',
       title: 'Separe arquivo de rota do aplicativo',
-      explanation: 'Em uma SPA, /assets/app.js é um arquivo real. Já /dashboard é uma tela conhecida pelo JavaScript do navegador, não um arquivo chamado dashboard no servidor.'
+      explanation: 'Em uma SPA, /assets/app.js é um arquivo real. Já /dashboard é uma tela conhecida pelo JavaScript do navegador, não um arquivo chamado dashboard no servidor.',
+      check: {
+        prompt: 'Na SPA deste laboratório, o que é /dashboard?',
+        options: ['Um arquivo físico obrigatório', 'Uma rota interpretada pelo aplicativo', 'O endereço do backend'],
+        correctIndex: 1
+      },
+      takeaway: 'Arquivos estáticos existem no disco; rotas da SPA existem na lógica do aplicativo carregado pelo navegador.'
     },
     {
       id: 'real-asset',
@@ -451,14 +505,26 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'spa-boundary',
       title: 'Entenda o limite',
-      explanation: 'nginx não sabe quais telas existem no React. Ele apenas devolve index.html. Depois disso, o roteador da SPA decide se /dashboard é uma rota válida.'
+      explanation: 'nginx não sabe quais telas existem no React. Ele apenas devolve index.html. Depois disso, o roteador da SPA decide se /dashboard é uma rota válida.',
+      check: {
+        prompt: 'Quem decide se /dashboard é uma tela válida depois que index.html chega?',
+        options: ['O roteador da SPA', 'A diretiva listen', 'O sistema de arquivos'],
+        correctIndex: 0
+      },
+      takeaway: 'O nginx garante a entrega do ponto de entrada; a aplicação no navegador é responsável por reconhecer suas próprias rotas.'
     }
   ],
   redirecionar: [
     {
       id: 'redirect-concept',
       title: 'Redirecionar é responder, não transportar',
-      explanation: 'nginx não busca a nova página nesta requisição. Ele responde “procure em outro endereço”. O cliente lê o status 3xx e o header Location e decide fazer uma segunda requisição.'
+      explanation: 'nginx não busca a nova página nesta requisição. Ele responde “procure em outro endereço”. O cliente lê o status 3xx e o header Location e decide fazer uma segunda requisição.',
+      check: {
+        prompt: 'Quem inicia a requisição para o novo endereço indicado por Location?',
+        options: ['O cliente', 'O arquivo nginx.conf', 'O sistema de arquivos'],
+        correctIndex: 0
+      },
+      takeaway: 'O servidor apenas devolve a instrução de redirecionamento; o cliente decide segui-la em uma nova requisição.'
     },
     {
       id: 'verbose-redirect',
@@ -473,14 +539,26 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'redirect-rule',
       title: 'Leia a regra que produziu o Location',
-      explanation: 'return 301 encerra o processamento. $host vira localhost e $request_uri preserva /antiga. Em produção, essa regra é comum para levar HTTP a HTTPS.'
+      explanation: 'return 301 encerra o processamento. $host vira localhost e $request_uri preserva /antiga. Em produção, essa regra é comum para levar HTTP a HTTPS.',
+      check: {
+        prompt: 'Qual variável preserva o caminho /antiga no novo endereço?',
+        options: ['$host', '$request_uri', '$remote_addr'],
+        correctIndex: 1
+      },
+      takeaway: '$host preserva o nome do site e $request_uri preserva o caminho pedido, formando o destino HTTPS completo.'
     }
   ],
   'proxy-reverso': [
     {
       id: 'proxy-concept',
       title: 'Há dois saltos, não um',
-      explanation: 'O cliente conversa com nginx. nginx então vira cliente do backend app. A resposta volta pelo caminho inverso. O visitante não precisa conhecer o endereço interno da aplicação.'
+      explanation: 'O cliente conversa com nginx. nginx então vira cliente do backend app. A resposta volta pelo caminho inverso. O visitante não precisa conhecer o endereço interno da aplicação.',
+      check: {
+        prompt: 'Quem abre a conexão com o backend interno?',
+        options: ['O navegador diretamente', 'O nginx', 'O DNS público'],
+        correctIndex: 1
+      },
+      takeaway: 'No segundo salto, nginx atua como cliente do backend. Para o visitante, o único endereço público continua sendo o do nginx.'
     },
     {
       id: 'proxy-request',
@@ -495,19 +573,37 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'forwarded-headers',
       title: 'Preserve o contexto original',
-      explanation: 'proxy_set_header Host informa qual site o cliente pediu. X-Forwarded-For carrega o IP original, pois para o backend a conexão veio do nginx. Esses headers permitem logs e regras corretas na aplicação.'
+      explanation: 'proxy_set_header Host informa qual site o cliente pediu. X-Forwarded-For carrega o IP original, pois para o backend a conexão veio do nginx. Esses headers permitem logs e regras corretas na aplicação.',
+      check: {
+        prompt: 'Qual header ajuda o backend a conhecer o IP original do cliente?',
+        options: ['Content-Type', 'X-Forwarded-For', 'Location'],
+        correctIndex: 1
+      },
+      takeaway: 'Sem X-Forwarded-For, o backend enxerga apenas o proxy como origem. O header conserva contexto útil para logs e segurança.'
     },
     {
       id: 'slash-rule',
       title: 'A barra final muda a URI',
-      explanation: 'proxy_pass http://app/v1/ possui uma URI e substitui /api/. Já proxy_pass http://app, sem parte de URI, repassaria /api/users inteiro. Essa pequena barra é uma fonte clássica de bugs.'
+      explanation: 'proxy_pass http://app/v1/ possui uma URI e substitui /api/. Já proxy_pass http://app, sem parte de URI, repassaria /api/users inteiro. Essa pequena barra é uma fonte clássica de bugs.',
+      check: {
+        prompt: 'Neste exemplo, qual caminho chega ao backend com proxy_pass http://app/v1/?',
+        options: ['/api/users', '/v1/users', '/users/v1'],
+        correctIndex: 1
+      },
+      takeaway: 'Como proxy_pass inclui /v1/, essa URI substitui o prefixo /api/ que correspondeu à location.'
     }
   ],
   'mais-de-um-backend': [
     {
       id: 'pool-concept',
       title: 'Um nome representa várias máquinas',
-      explanation: 'upstream api agrupa três peers. proxy_pass usa o nome do grupo, e nginx escolhe um peer saudável para cada requisição. Assim a URL pública não muda quando a infraestrutura cresce.'
+      explanation: 'upstream api agrupa três peers. proxy_pass usa o nome do grupo, e nginx escolhe um peer saudável para cada requisição. Assim a URL pública não muda quando a infraestrutura cresce.',
+      check: {
+        prompt: 'O que o nome upstream api representa?',
+        options: ['Um único arquivo', 'Um grupo de backends', 'Um status HTTP'],
+        correctIndex: 1
+      },
+      takeaway: 'O upstream cria um nome estável para um conjunto variável de backends e concentra a política de distribuição.'
     },
     {
       id: 'weighted-a',
@@ -541,7 +637,13 @@ const guides: Record<string, LessonStep[]> = {
     {
       id: 'protect-backend',
       title: 'Resolva dois problemas diferentes',
-      explanation: 'Cache reduz trabalho repetido: uma resposta pronta evita chamar o backend. Limite de requisições controla quantas tentativas uma origem pode fazer em pouco tempo. Um melhora desempenho; o outro protege capacidade.'
+      explanation: 'Cache reduz trabalho repetido: uma resposta pronta evita chamar o backend. Limite de requisições controla quantas tentativas uma origem pode fazer em pouco tempo. Um melhora desempenho; o outro protege capacidade.',
+      check: {
+        prompt: 'Qual recurso impede uma rajada excessiva antes de ela alcançar o backend?',
+        options: ['proxy_cache', 'limit_req', 'server_name'],
+        correctIndex: 1
+      },
+      takeaway: 'Cache elimina trabalho repetido; limit_req controla pressão de entrada. Eles se complementam, mas resolvem problemas diferentes.'
     },
     {
       id: 'cache-miss',
