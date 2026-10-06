@@ -28,6 +28,8 @@ test('runs curl, renders the trace and completes lesson one', async ({ page }) =
   await expect(page.getByText('HTTP/1.1 200 OK')).toBeVisible()
   await expect(page.getByText('Lição concluída')).toBeVisible()
   await expect(page.getByText('server localhost escolhido')).toBeVisible()
+  await expect(page.getByLabel('Copiar trace')).toBeVisible()
+  await expect(page.locator('.trace-card').first()).toHaveCSS('user-select', 'text')
   assertNoErrors()
 })
 

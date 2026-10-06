@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { ArrowRight, Check, CircleX, File, Globe2, HardDrive, Pause, Play, RotateCw, Server, StepForward } from 'lucide-react'
+import { ArrowRight, Check, CircleX, Copy, File, Globe2, HardDrive, Pause, Play, RotateCw, Server, StepForward } from 'lucide-react'
 import { useLab } from '../store/useLab'
 import type { TraceKind } from '../sim/request'
 import { IconButton, Panel } from './Panel'
@@ -8,6 +8,7 @@ import { IconButton, Panel } from './Panel'
 const iconFor: Record<TraceKind, typeof Globe2> = { request: Globe2, server: Server, location: RotateCw, rewrite: RotateCw, filesystem: HardDrive, proxy: ArrowRight, response: File }
 
 export function RequestStage() {
+  const [copied, setCopied] = useState(false)
   const response = useLab((state) => state.response)
   const visible = useLab((state) => state.visibleTraceSteps)
   const playing = useLab((state) => state.playing)
@@ -28,8 +29,29 @@ export function RequestStage() {
   const shown = response?.trace.slice(0, visible) ?? []
   const current = shown.at(-1)
 
+  const copyTrace = async () => {
+    if (!response) return
+    const text = response.trace.map((trace) => `${trace.title}\n${trace.detail}${trace.line ? `\nlinha ${trace.line}` : ''}`).join('\n\n')
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard API unavailable')
+      await navigator.clipboard.writeText(text)
+    } catch {
+      const field = document.createElement('textarea')
+      field.value = text
+      field.style.position = 'fixed'
+      field.style.opacity = '0'
+      document.body.append(field)
+      field.select()
+      document.execCommand('copy')
+      field.remove()
+    }
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1_500)
+  }
+
   return (
     <Panel title="Caminho da requisição" eyebrow="Palco" className="stage-panel" actions={<>
+      {response && <IconButton label={copied ? 'Trace copiado' : 'Copiar trace'} onClick={() => void copyTrace()} active={copied}>{copied ? <Check size={14} /> : <Copy size={14} />}</IconButton>}
       <IconButton label={playing ? 'Pausar animação' : 'Continuar animação'} onClick={toggle} active={playing}>{playing ? <Pause size={14} /> : <Play size={14} />}</IconButton>
       <IconButton label="Avançar um passo" onClick={() => step()}><StepForward size={14} /></IconButton>
       <button type="button" className="skip-button" onClick={finish}>ver tudo</button>

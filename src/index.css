@@ -465,6 +465,7 @@ button {
   overflow: auto;
   padding: 16px;
   background: #090d13;
+  user-select: text;
 }
 
 .stage-grid {
@@ -606,6 +607,12 @@ button {
   border: 1px solid var(--color-line);
   border-radius: 9px;
   background: var(--color-panel);
+  cursor: text;
+  user-select: text;
+}
+
+.trace-card * {
+  user-select: text;
 }
 
 .trace-card::before {
