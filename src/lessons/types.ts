@@ -27,6 +27,7 @@ export interface LessonStep {
   command?: string
   commandParts?: { text: string; meaning: string }[]
   lookFor?: string
+  takeaway?: string
   applyEdit?: { search: string; replace: string; label: string }
   verify?: (events: LessonEvent[]) => boolean
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BookOpen, Check, ChevronRight, Circle, Copy, ExternalLink, Eye, Lightbulb, LockKeyhole, Monitor, PencilLine, Play } from 'lucide-react'
+import { BookOpen, Check, CheckCircle2, ChevronRight, Circle, Copy, ExternalLink, Eye, Lightbulb, LockKeyhole, Monitor, PencilLine, Play, RotateCcw } from 'lucide-react'
 import { lessons, type LessonStep } from '../lessons'
 import { useLab } from '../store/useLab'
 import { Panel } from './Panel'
@@ -8,6 +8,7 @@ export function LessonPanel() {
   const [tab, setTab] = useState<'mission' | 'article'>('mission')
   const [hintCount, setHintCount] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<string[]>([])
+  const [verifiedSteps, setVerifiedSteps] = useState<string[]>([])
   const [copiedStep, setCopiedStep] = useState<string>()
   const stepStart = useRef({ key: '', eventCount: 0 })
   const index = useLab((state) => state.lessonIndex)
@@ -31,6 +32,7 @@ export function LessonPanel() {
     setTab('mission')
     setHintCount(0)
     setCompletedSteps([])
+    setVerifiedSteps([])
     setCopiedStep(undefined)
     stepStart.current = { key: '', eventCount: 0 }
   }, [lesson.id, lessonRunId])
@@ -43,7 +45,7 @@ export function LessonPanel() {
       return
     }
     if (events.length > stepStart.current.eventCount && currentStep.verify(events)) {
-      setCompletedSteps((current) => current.includes(currentStep.id) ? current : [...current, currentStep.id])
+      setVerifiedSteps((current) => current.includes(currentStep.id) ? current : [...current, currentStep.id])
     }
   }, [currentStep, events, lesson.id])
 
@@ -56,7 +58,7 @@ export function LessonPanel() {
   const applyStepEdit = (step: LessonStep) => {
     if (!step.applyEdit) return
     setDraft(source.replace(step.applyEdit.search, step.applyEdit.replace))
-    acknowledge(step.id)
+    setVerifiedSteps((current) => current.includes(step.id) ? current : [...current, step.id])
   }
 
   const runStepCommand = (step: LessonStep) => {
@@ -96,19 +98,26 @@ export function LessonPanel() {
               const completed = stepDone[stepIndex]
               const current = stepIndex === activeStep
               const locked = activeStep >= 0 && stepIndex > activeStep
+              const verified = verifiedSteps.includes(step.id)
               return <section className={`guide-step ${completed ? 'completed' : ''} ${current ? 'current' : ''} ${locked ? 'locked' : ''}`} key={step.id}>
                 <div className="guide-step-heading"><span className="guide-step-number">{completed ? <Check size={12} /> : stepIndex + 1}</span><div><small>{completed ? 'Concluído' : current ? 'Agora' : 'Depois'}</small><h3>{step.title}</h3></div></div>
                 {current && <div className="guide-step-body">
+                  <div className="learning-phase"><span>1</span> Entenda</div>
                   <p>{step.explanation}</p>
                   {step.command && <>
+                    <div className="learning-phase"><span>2</span> Faça</div>
                     <div className="guided-command"><code>{step.command}</code><button type="button" aria-label={`Copiar comando do passo ${stepIndex + 1}`} onClick={() => void copyCommand(step.id, step.command!)}>{copiedStep === step.id ? <Check size={12} /> : <Copy size={12} />}</button></div>
                     {step.commandParts && <div className="command-parts">{step.commandParts.map((part) => <div key={part.text}><code>{part.text}</code><span>{part.meaning}</span></div>)}</div>}
                   </>}
-                  {step.lookFor && <div className="look-for"><Eye size={14} /><div><strong>O que observar</strong><span>{step.lookFor}</span></div></div>}
-                  {step.applyEdit ? <button type="button" className="guide-action" onClick={() => applyStepEdit(step)}><PencilLine size={14} />{step.applyEdit.label}</button>
-                    : step.command ? <button type="button" className="guide-action" onClick={() => runStepCommand(step)}><Play size={14} />Executar no terminal</button>
+                  {step.lookFor && <div className="look-for"><Eye size={14} /><div><strong>3 · O que observar</strong><span>{step.lookFor}</span></div></div>}
+                  {verified ? <>
+                    <div className="result-confirm" role="status"><CheckCircle2 size={16} /><div><strong>Evidência encontrada</strong><span>{step.takeaway ?? 'O resultado esperado apareceu. Relacione-o com a explicação antes de continuar.'}</span></div></div>
+                    <button type="button" className="guide-action" onClick={() => acknowledge(step.id)}>Entendi o resultado <ChevronRight size={14} /></button>
+                    {step.command && <button type="button" className="repeat-action" onClick={() => runStepCommand(step)}><RotateCcw size={12} /> Executar novamente</button>}
+                  </> : step.applyEdit ? <button type="button" className="guide-action" onClick={() => applyStepEdit(step)}><PencilLine size={14} />{step.applyEdit.label}</button>
+                    : step.command ? <button type="button" className="guide-action" onClick={() => runStepCommand(step)}><Play size={14} />Executar e observar</button>
                       : <button type="button" className="guide-action" onClick={() => acknowledge(step.id)}>Entendi, continuar <ChevronRight size={14} /></button>}
-                  {step.command && <p className="type-yourself">Você também pode digitar o comando no terminal à esquerda.</p>}
+                  {step.command && !verified && <p className="type-yourself">Você também pode digitar o comando no terminal à esquerda.</p>}
                 </div>}
               </section>
             })}

@@ -33,9 +33,10 @@ describe('beginner guides', () => {
 
   it('explains what to observe and verifies every guided command', () => {
     for (const lesson of lessons) {
-      for (const step of lesson.steps.filter((candidate) => candidate.command)) {
-        expect(step.lookFor, `${lesson.id}/${step.id}`).toBeTruthy()
-        expect(step.verify, `${lesson.id}/${step.id}`).toBeTypeOf('function')
+      for (const step of lesson.steps.filter((candidate) => candidate.command || candidate.applyEdit)) {
+        if (step.command) expect(step.lookFor, `${lesson.id}/${step.id}`).toBeTruthy()
+        expect(step.takeaway, `${lesson.id}/${step.id}`).toBeTruthy()
+        if (step.command) expect(step.verify, `${lesson.id}/${step.id}`).toBeTypeOf('function')
       }
     }
   })
