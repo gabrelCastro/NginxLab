@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { ArrowRight, Check, CircleX, Copy, File, Globe2, HardDrive, Pause, Play, RotateCw, Server, StepForward } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, CircleX, Copy, File, Globe2, HardDrive, Pause, Play, RotateCw, Server, StepForward } from 'lucide-react'
 import { useLab } from '../store/useLab'
 import type { TraceKind } from '../sim/request'
 import { IconButton, Panel } from './Panel'
@@ -68,16 +68,7 @@ export function RequestStage() {
 }
 
 function EmptyStage() {
-  const [copied, setCopied] = useState(false)
-  const command = 'curl -i http://localhost/'
-
-  const copyCommand = async () => {
-    await copyText(command)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1_500)
-  }
-
-  return <div className="empty-stage"><div className="empty-orbit"><span /></div><Globe2 size={24} /><h3>Nenhuma requisição ainda</h3><p>Use este comando no terminal. Cada decisão aparecerá aqui.</p><div className="empty-command"><code>{command}</code><button type="button" aria-label={copied ? 'Comando copiado' : 'Copiar comando curl'} onClick={() => void copyCommand()}>{copied ? <Check size={13} /> : <Copy size={13} />}<span>{copied ? 'copiado' : 'copiar'}</span></button></div></div>
+  return <div className="empty-stage"><div className="empty-orbit"><span /></div><Globe2 size={24} /><h3>O palco está pronto</h3><p>Comece pelo passo marcado “Agora”. Quando a aula pedir uma requisição, cada decisão do nginx aparecerá aqui.</p><div className="stage-guide-cue"><BookOpen size={14} /><span>Siga o passo a passo à direita</span></div></div>
 }
 
 async function copyText(text: string) {

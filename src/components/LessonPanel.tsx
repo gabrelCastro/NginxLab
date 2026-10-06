@@ -1,19 +1,84 @@
-import { useState } from 'react'
-import { Check, ChevronRight, Circle, ExternalLink, Lightbulb, LockKeyhole, Monitor } from 'lucide-react'
-import { lessons } from '../lessons'
+import { useEffect, useRef, useState } from 'react'
+import { BookOpen, Check, ChevronRight, Circle, Copy, ExternalLink, Eye, Lightbulb, LockKeyhole, Monitor, PencilLine, Play } from 'lucide-react'
+import { lessons, type LessonStep } from '../lessons'
 import { useLab } from '../store/useLab'
 import { Panel } from './Panel'
 
 export function LessonPanel() {
   const [tab, setTab] = useState<'mission' | 'article'>('mission')
   const [hintCount, setHintCount] = useState(0)
+  const [completedSteps, setCompletedSteps] = useState<string[]>([])
+  const [copiedStep, setCopiedStep] = useState<string>()
+  const stepStart = useRef({ key: '', eventCount: 0 })
   const index = useLab((state) => state.lessonIndex)
+  const lessonRunId = useLab((state) => state.lessonRunId)
   const events = useLab((state) => state.events)
   const response = useLab((state) => state.response)
+  const source = useLab((state) => state.session.draftSource)
+  const runCommand = useLab((state) => state.runCommand)
+  const setDraft = useLab((state) => state.setDraft)
+  const markLessonComplete = useLab((state) => state.markLessonComplete)
   const selectLesson = useLab((state) => state.selectLesson)
   const lesson = lessons[index]!
   const done = lesson.objectives.map((objective) => objective.verify(events))
-  const complete = done.every(Boolean)
+  const stepDone = lesson.steps.map((step) => completedSteps.includes(step.id))
+  const activeStep = stepDone.findIndex((value) => !value)
+  const currentStep = activeStep >= 0 ? lesson.steps[activeStep] : undefined
+  const guideComplete = activeStep === -1
+  const complete = done.every(Boolean) && guideComplete
+
+  useEffect(() => {
+    setTab('mission')
+    setHintCount(0)
+    setCompletedSteps([])
+    setCopiedStep(undefined)
+    stepStart.current = { key: '', eventCount: 0 }
+  }, [lesson.id, lessonRunId])
+
+  useEffect(() => {
+    if (!currentStep?.verify) return
+    const key = `${lesson.id}:${currentStep.id}`
+    if (stepStart.current.key !== key) {
+      stepStart.current = { key, eventCount: events.length }
+      return
+    }
+    if (events.length > stepStart.current.eventCount && currentStep.verify(events)) {
+      setCompletedSteps((current) => current.includes(currentStep.id) ? current : [...current, currentStep.id])
+    }
+  }, [currentStep, events, lesson.id])
+
+  useEffect(() => {
+    if (complete) markLessonComplete(lesson.id)
+  }, [complete, lesson.id, markLessonComplete])
+
+  const acknowledge = (id: string) => setCompletedSteps((current) => current.includes(id) ? current : [...current, id])
+
+  const applyStepEdit = (step: LessonStep) => {
+    if (!step.applyEdit) return
+    setDraft(source.replace(step.applyEdit.search, step.applyEdit.replace))
+    acknowledge(step.id)
+  }
+
+  const runStepCommand = (step: LessonStep) => {
+    if (step.command) runCommand(step.command)
+  }
+
+  const copyCommand = async (id: string, command: string) => {
+    try {
+      await navigator.clipboard.writeText(command)
+    } catch {
+      const field = document.createElement('textarea')
+      field.value = command
+      field.style.position = 'fixed'
+      field.style.opacity = '0'
+      document.body.append(field)
+      field.select()
+      document.execCommand('copy')
+      field.remove()
+    }
+    setCopiedStep(id)
+    window.setTimeout(() => setCopiedStep(undefined), 1_500)
+  }
 
   return (
     <Panel title={`${lesson.number}. ${lesson.title}`} eyebrow={lesson.eyebrow} className="lesson-panel">
@@ -24,8 +89,32 @@ export function LessonPanel() {
       <div className="lesson-content">
         {tab === 'mission' ? <>
           <p className="lesson-idea">{lesson.idea}</p>
-          <h3 className="section-label">Objetivos</h3>
-          <div className="objective-list">
+          <div className="guide-heading"><div><BookOpen size={14} /><strong>Passo a passo</strong></div><span>{stepDone.filter(Boolean).length} de {lesson.steps.length}</span></div>
+          <div className="guide-progress" aria-label={`${stepDone.filter(Boolean).length} de ${lesson.steps.length} passos concluídos`}><span style={{ width: `${stepDone.filter(Boolean).length / lesson.steps.length * 100}%` }} /></div>
+          <div className="guide-list">
+            {lesson.steps.map((step, stepIndex) => {
+              const completed = stepDone[stepIndex]
+              const current = stepIndex === activeStep
+              const locked = activeStep >= 0 && stepIndex > activeStep
+              return <section className={`guide-step ${completed ? 'completed' : ''} ${current ? 'current' : ''} ${locked ? 'locked' : ''}`} key={step.id}>
+                <div className="guide-step-heading"><span className="guide-step-number">{completed ? <Check size={12} /> : stepIndex + 1}</span><div><small>{completed ? 'Concluído' : current ? 'Agora' : 'Depois'}</small><h3>{step.title}</h3></div></div>
+                {current && <div className="guide-step-body">
+                  <p>{step.explanation}</p>
+                  {step.command && <>
+                    <div className="guided-command"><code>{step.command}</code><button type="button" aria-label={`Copiar comando do passo ${stepIndex + 1}`} onClick={() => void copyCommand(step.id, step.command!)}>{copiedStep === step.id ? <Check size={12} /> : <Copy size={12} />}</button></div>
+                    {step.commandParts && <div className="command-parts">{step.commandParts.map((part) => <div key={part.text}><code>{part.text}</code><span>{part.meaning}</span></div>)}</div>}
+                  </>}
+                  {step.lookFor && <div className="look-for"><Eye size={14} /><div><strong>O que observar</strong><span>{step.lookFor}</span></div></div>}
+                  {step.applyEdit ? <button type="button" className="guide-action" onClick={() => applyStepEdit(step)}><PencilLine size={14} />{step.applyEdit.label}</button>
+                    : step.command ? <button type="button" className="guide-action" onClick={() => runStepCommand(step)}><Play size={14} />Executar no terminal</button>
+                      : <button type="button" className="guide-action" onClick={() => acknowledge(step.id)}>Entendi, continuar <ChevronRight size={14} /></button>}
+                  {step.command && <p className="type-yourself">Você também pode digitar o comando no terminal à esquerda.</p>}
+                </div>}
+              </section>
+            })}
+          </div>
+          <h3 className="section-label proof-label">O que você comprovou</h3>
+          <div className="objective-list compact">
             {lesson.objectives.map((objective, objectiveIndex) => <div className={done[objectiveIndex] ? 'objective done' : 'objective'} key={objective.id}>{done[objectiveIndex] ? <Check size={14} /> : <Circle size={14} />}<span>{objective.label}</span></div>)}
           </div>
           {complete && <div className="completion-card"><Check size={17} /><div><strong>Lição concluída</strong><span>Você provou isso pelo estado do simulador.</span></div>{index < lessons.length - 1 && <button type="button" onClick={() => selectLesson(index + 1)}>Próxima <ChevronRight size={14} /></button>}</div>}

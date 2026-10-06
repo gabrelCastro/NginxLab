@@ -1,4 +1,4 @@
-import type { Lesson, LessonEvent } from './types'
+import type { Lesson, LessonEvent, LessonStep } from './types'
 
 const baseStart = `events {}
 http {
@@ -13,7 +13,7 @@ http {
 const requested = (predicate: (event: LessonEvent) => boolean) => (events: LessonEvent[]) => events.some((event) => event.action === 'request' && predicate(event))
 const commandSucceeded = (action: LessonEvent['action']) => (events: LessonEvent[]) => events.some((event) => event.action === action && event.success)
 
-export const lessons: Lesson[] = [
+const lessonDefinitions: Omit<Lesson, 'steps'>[] = [
   {
     id: 'servidor-de-arquivos', number: 1, title: 'Um servidor que entrega arquivos', eyebrow: 'Primeiro contato',
     idea: 'Uma requisição chega a uma porta; o server transforma a URI em um caminho no disco e devolve uma resposta.',
@@ -21,20 +21,21 @@ export const lessons: Lesson[] = [
     files: { '/usr/share/nginx/html/index.html': '<h1>Olá, nginx!</h1>', '/usr/share/nginx/html/sobre.html': '<h1>Sobre</h1>' },
     objectives: [
       { id: 'home-200', label: 'Receba 200 ao pedir a página inicial', verify: requested((event) => event.response?.status === 200 && event.response.filePath?.endsWith('index.html') === true) },
-      { id: 'see-headers', label: 'Veja status e headers com curl -i', verify: (events) => events.some((event) => event.command.startsWith('curl -i') && event.response?.status === 200) }
+      { id: 'see-headers', label: 'Veja status e headers com curl -i', verify: (events) => events.some((event) => event.command.startsWith('curl -i') && event.response?.status === 200) },
+      { id: 'not-found', label: 'Compare com uma resposta 404', verify: requested((event) => event.response?.status === 404) }
     ],
-    hints: ['Rode curl -i http://localhost/.', 'root define a pasta; index define o arquivo usado quando a URI aponta para um diretório.'],
+    hints: ['Siga o cartão marcado “Agora”; ele libera uma ação de cada vez.', 'root define a pasta; index define o arquivo usado quando a URI aponta para um diretório.'],
     article: {
       paragraphs: ['HTTP é uma conversa: o cliente envia método, caminho e headers; o servidor devolve status, headers e corpo.', 'O nginx junta o root à URI. Para /, procura o arquivo configurado por index. Um arquivo encontrado gera 200; um caminho ausente gera 404.'],
       links: [{ label: 'Documentação de root', href: 'https://nginx.org/en/docs/http/ngx_http_core_module.html#root' }]
     },
-    walkthrough: ['curl -i http://localhost/']
+    walkthrough: ['curl -i http://localhost/', 'curl -i http://localhost/nao-existe']
   },
   {
     id: 'teste-e-reload', number: 2, title: 'Mudei a config e nada mudou?', eyebrow: 'Ciclo seguro',
     idea: 'O arquivo editado não é a configuração ativa. Primeiro teste; depois recarregue sem derrubar o serviço.',
     initialConfig: baseStart,
-    files: { '/usr/share/nginx/html/index.html': 'config ativa' },
+    files: { '/usr/share/nginx/html/index.html': 'config antiga', '/usr/share/nginx/html/sobre.html': 'nova configuração' },
     objectives: [
       { id: 'test', label: 'Teste a configuração com nginx -t', verify: commandSucceeded('test') },
       { id: 'reload', label: 'Ative a configuração com nginx -s reload', verify: commandSucceeded('reload') }
@@ -232,8 +233,329 @@ http {
   }
 ]
 
+const gotStatus = (status: number, path?: string) => requested((event) => event.response?.status === status && (!path || event.command.includes(path)))
+
+const guides: Record<string, LessonStep[]> = {
+  'servidor-de-arquivos': [
+    {
+      id: 'tour',
+      title: 'Conheça a bancada',
+      explanation: 'Você está em um laboratório, não em um servidor real. À esquerda fica o arquivo que diz ao nginx como trabalhar e, abaixo, o terminal. No centro, o palco mostrará cada decisão. Este painel conduz o exercício. Você não precisa decorar nada agora.'
+    },
+    {
+      id: 'config',
+      title: 'Leia a configuração como uma frase',
+      explanation: 'No editor, server significa “um site”. listen 80 diz em qual porta ele recebe visitas. root aponta para a pasta dos arquivos. index diz qual arquivo abrir quando alguém pede apenas /. As chaves agrupam essas regras; o ; encerra cada instrução.'
+    },
+    {
+      id: 'first-request',
+      title: 'Faça sua primeira requisição',
+      explanation: 'Agora você será o cliente. curl é um pequeno navegador de terminal: ele envia uma requisição HTTP ao endereço e imprime a resposta. Execute o comando e acompanhe a partícula no palco.',
+      command: 'curl -i http://localhost/',
+      commandParts: [
+        { text: 'curl', meaning: 'programa que faz a requisição' },
+        { text: '-i', meaning: 'mostra status e headers da resposta' },
+        { text: 'http://localhost/', meaning: 'este servidor, no caminho /' }
+      ],
+      lookFor: 'Procure HTTP/1.1 200 OK no terminal. 200 significa que o pedido deu certo. No palco, veja root e index virarem o caminho /usr/share/nginx/html/index.html.',
+      verify: gotStatus(200, 'localhost/')
+    },
+    {
+      id: 'read-response',
+      title: 'Entenda o que voltou',
+      explanation: 'A primeira linha é o status. Os headers descrevem a resposta — por exemplo, o tipo e o tamanho. Depois da linha vazia vem o corpo: neste caso, o HTML do arquivo. Requisição é o pedido; resposta é o que o servidor devolve.'
+    },
+    {
+      id: 'compare-404',
+      title: 'Compare com um arquivo ausente',
+      explanation: 'Peça agora um caminho que não existe. A rede e o server continuam funcionando; só o recurso pedido não foi encontrado. Essa diferença é exatamente o que o status 404 comunica.',
+      command: 'curl -i http://localhost/nao-existe',
+      commandParts: [
+        { text: '/nao-existe', meaning: 'URI que o nginx tentará encontrar no root' },
+        { text: '404', meaning: 'o servidor respondeu, mas não encontrou o recurso' }
+      ],
+      lookFor: 'Compare 404 Not Found com o 200 anterior e observe no palco o caminho de arquivo que foi procurado.',
+      verify: gotStatus(404, '/nao-existe')
+    }
+  ],
+  'teste-e-reload': [
+    {
+      id: 'two-configs',
+      title: 'Separe arquivo editado de configuração ativa',
+      explanation: 'Editar nginx.conf não muda o servidor imediatamente. O nginx continua usando a última configuração carregada. Isso evita que um erro de digitação derrube um site que já funciona.'
+    },
+    {
+      id: 'edit-index',
+      title: 'Faça uma mudança visível',
+      explanation: 'Vamos trocar o arquivo inicial de index.html para sobre.html. O botão altera apenas o editor; repare no aviso “não recarregada”. Se fizer uma requisição agora, a versão antiga ainda responderá.',
+      applyEdit: { search: 'index index.html;', replace: 'index sobre.html;', label: 'Trocar index no editor' }
+    },
+    {
+      id: 'test-config',
+      title: 'Teste antes de aplicar',
+      explanation: 'nginx -t analisa sintaxe, quantidade de argumentos e onde cada diretiva foi usada. Ele não ativa nada. Esse é o cinto de segurança antes de todo reload.',
+      command: 'nginx -t',
+      commandParts: [{ text: 'nginx', meaning: 'programa do servidor' }, { text: '-t', meaning: 'testa a configuração e termina' }],
+      lookFor: 'As duas linhas finais devem dizer syntax is ok e test is successful.',
+      verify: commandSucceeded('test')
+    },
+    {
+      id: 'reload-config',
+      title: 'Ative sem derrubar o servidor',
+      explanation: 'Com o teste verde, reload pede ao nginx que adote a nova configuração de forma controlada. Só agora a edição passa a valer.',
+      command: 'nginx -s reload',
+      commandParts: [{ text: '-s reload', meaning: 'envia o sinal de recarga ao processo nginx' }],
+      lookFor: 'O indicador acima do editor volta de “não recarregada” para “ativa”.',
+      verify: commandSucceeded('reload')
+    },
+    {
+      id: 'prove-reload',
+      title: 'Prove que mudou',
+      explanation: 'Uma boa operação termina com verificação. Faça a mesma requisição da lição anterior e confirme que o corpo agora vem de sobre.html.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'O corpo deve dizer “nova configuração” e o palco deve mostrar /usr/share/nginx/html/sobre.html.',
+      verify: requested((event) => event.response?.body === 'nova configuração')
+    }
+  ],
+  'varios-sites': [
+    {
+      id: 'host-concept',
+      title: 'Uma porta pode receber vários sites',
+      explanation: 'Dois sites podem compartilhar o mesmo IP e a porta 80. Para saber qual deles queremos, o cliente envia o header Host — como escrever o nome do destinatário no envelope.'
+    },
+    {
+      id: 'named-host',
+      title: 'Enderece a loja',
+      explanation: 'O endereço da conexão continua localhost, mas -H troca o Host dentro da requisição. nginx compara esse valor com cada server_name.',
+      command: 'curl -i -H "Host: loja.test" http://localhost/',
+      commandParts: [{ text: '-H', meaning: 'adiciona um header HTTP' }, { text: 'Host: loja.test', meaning: 'nome do site desejado' }],
+      lookFor: 'No palco, server loja.test deve ser escolhido porque corresponde ao Host.',
+      verify: requested((event) => event.response?.serverId === 'loja.test')
+    },
+    {
+      id: 'default-host',
+      title: 'Veja o plano B',
+      explanation: 'E se nenhum server_name combinar? nginx usa o bloco marcado default_server. Isso impede que a escolha fique ambígua.',
+      command: 'curl -i -H "Host: desconhecido.test" http://localhost/',
+      lookFor: 'O corpo será “site padrão”; o trace explica que não houve correspondência de nome.',
+      verify: requested((event) => event.response?.serverId === 'padrao.test')
+    },
+    {
+      id: 'host-summary',
+      title: 'Guarde a ordem da escolha',
+      explanation: 'Primeiro a porta seleciona os blocos candidatos. Depois o Host é comparado com server_name. Sem correspondência, default_server vence. É assim que um único nginx hospeda muitos domínios.'
+    }
+  ],
+  'caminhos-e-arquivos': [
+    {
+      id: 'uri-path',
+      title: 'URI não é caminho de disco',
+      explanation: 'A pessoa pede uma URI, como /docs/guia.txt. nginx usa a configuração para transformá-la em um caminho físico. root e alias fazem essa transformação de maneiras diferentes.'
+    },
+    {
+      id: 'root-path',
+      title: 'root conserva a URI inteira',
+      explanation: 'Dentro de location /docs/, root /srv mantém /docs/guia.txt e coloca /srv na frente. Resultado: /srv/docs/guia.txt.',
+      command: 'curl -i http://localhost/docs/guia.txt',
+      lookFor: 'No passo de disco do palco, confirme /srv/docs/guia.txt.',
+      verify: requested((event) => event.response?.filePath === '/srv/docs/guia.txt')
+    },
+    {
+      id: 'alias-path',
+      title: 'alias substitui o prefixo',
+      explanation: 'alias /data/images/ troca a parte /imagens/ que correspondeu à location. Sobra logo.txt; o resultado é /data/images/logo.txt.',
+      command: 'curl -i http://localhost/imagens/logo.txt',
+      lookFor: 'Compare o caminho mostrado agora com o caminho produzido por root.',
+      verify: requested((event) => event.response?.filePath === '/data/images/logo.txt')
+    },
+    {
+      id: 'read-error-log',
+      title: 'Use o erro como pista',
+      explanation: 'Quando um arquivo não existe, o error.log registra exatamente qual caminho foi tentado. Isso transforma um 404 genérico em uma pista concreta para depuração.',
+      command: 'curl -i http://localhost/docs/ausente.txt',
+      lookFor: 'Depois, experimente tail /var/log/nginx/error.log no terminal para ver o open() failed.',
+      verify: gotStatus(404, '/docs/ausente.txt')
+    }
+  ],
+  'location-vencedora': [
+    {
+      id: 'location-map',
+      title: 'Pense em location como regras de caminho',
+      explanation: 'Cada location é candidata a tratar a URI. nginx não usa simplesmente a primeira do arquivo: ele segue uma ordem específica. O palco testará cada candidata sem esconder as derrotadas.'
+    },
+    {
+      id: 'exact-location',
+      title: 'A igualdade exata encerra a disputa',
+      explanation: 'O modificador = exige que a URI inteira seja igual. Se combinar, nginx para de procurar porque nenhuma regra pode ser mais específica.',
+      command: 'curl -i http://localhost/health',
+      commandParts: [{ text: 'location = /health', meaning: 'somente a URI /health, sem caracteres extras' }],
+      lookFor: 'A location exata acende e vence imediatamente.',
+      verify: requested((event) => event.response?.location === '= /health')
+    },
+    {
+      id: 'regex-location',
+      title: 'Regex pode superar um prefixo',
+      explanation: 'Sem uma exata, nginx guarda o maior prefixo e testa regex na ordem em que aparecem. .php$ significa “termina em .php”.',
+      command: 'curl -i http://localhost/index.php',
+      lookFor: 'location / combina, mas a regex ~ \\.php$ vence depois.',
+      verify: requested((event) => event.response?.location?.startsWith('~ ') === true)
+    },
+    {
+      id: 'prefix-stop',
+      title: '^~ protege um prefixo das regex',
+      explanation: 'Para /static/app.php, a regex também poderia combinar. Mas ^~ diz: se este for o maior prefixo, não teste regex. Isso é útil para áreas estritamente estáticas.',
+      command: 'curl -i http://localhost/static/app.php',
+      lookFor: 'O trace deve parar em location ^~ /static/ e devolver “estático”.',
+      verify: requested((event) => event.response?.location === '^~ /static/')
+    }
+  ],
+  'spa-try-files': [
+    {
+      id: 'spa-problem',
+      title: 'Separe arquivo de rota do aplicativo',
+      explanation: 'Em uma SPA, /assets/app.js é um arquivo real. Já /dashboard é uma tela conhecida pelo JavaScript do navegador, não um arquivo chamado dashboard no servidor.'
+    },
+    {
+      id: 'real-asset',
+      title: 'Primeiro, deixe o arquivo real vencer',
+      explanation: 'try_files testa os candidatos da esquerda para a direita. $uri representa a URI recebida. Como o asset existe, a busca termina nele.',
+      command: 'curl -i http://localhost/assets/app.js',
+      commandParts: [{ text: '$uri', meaning: 'variável com /assets/app.js nesta requisição' }],
+      lookFor: 'O primeiro candidato existe e /app/assets/app.js é servido.',
+      verify: requested((event) => event.response?.filePath === '/app/assets/app.js')
+    },
+    {
+      id: 'spa-fallback',
+      title: 'Agora use o fallback da SPA',
+      explanation: 'Para /dashboard, nem $uri nem $uri/ existem. O último candidato, /index.html, causa uma busca interna. Esse HTML inicia o app, que então interpreta /dashboard.',
+      command: 'curl -i http://localhost/dashboard',
+      lookFor: 'Veja as duas tentativas falharem antes do fallback interno encontrar /app/index.html.',
+      verify: requested((event) => event.command.includes('/dashboard') && event.response?.filePath === '/app/index.html')
+    },
+    {
+      id: 'spa-boundary',
+      title: 'Entenda o limite',
+      explanation: 'nginx não sabe quais telas existem no React. Ele apenas devolve index.html. Depois disso, o roteador da SPA decide se /dashboard é uma rota válida.'
+    }
+  ],
+  redirecionar: [
+    {
+      id: 'redirect-concept',
+      title: 'Redirecionar é responder, não transportar',
+      explanation: 'nginx não busca a nova página nesta requisição. Ele responde “procure em outro endereço”. O cliente lê o status 3xx e o header Location e decide fazer uma segunda requisição.'
+    },
+    {
+      id: 'verbose-redirect',
+      title: 'Veja os dois lados da conversa',
+      explanation: 'curl -v mostra linhas com > para o pedido enviado e < para a resposta recebida. Isso deixa claro que o redirect veio do servidor.',
+      command: 'curl -v http://localhost/antiga',
+      commandParts: [{ text: '-v', meaning: 'modo verbose: mostra pedido e resposta' }, { text: '301', meaning: 'mudança permanente' }],
+      lookFor: 'Encontre HTTP/1.1 301 e Location: https://localhost/antiga.',
+      verify: requested((event) => event.response?.status === 301 && Boolean(event.response.headers.Location))
+    },
+    {
+      id: 'redirect-rule',
+      title: 'Leia a regra que produziu o Location',
+      explanation: 'return 301 encerra o processamento. $host vira localhost e $request_uri preserva /antiga. Em produção, essa regra é comum para levar HTTP a HTTPS.'
+    }
+  ],
+  'proxy-reverso': [
+    {
+      id: 'proxy-concept',
+      title: 'Há dois saltos, não um',
+      explanation: 'O cliente conversa com nginx. nginx então vira cliente do backend app. A resposta volta pelo caminho inverso. O visitante não precisa conhecer o endereço interno da aplicação.'
+    },
+    {
+      id: 'proxy-request',
+      title: 'Envie uma requisição pela porta pública',
+      explanation: 'A location /api/ captura a URI. proxy_pass decide o destino. Como termina em /v1/, essa parte substitui o prefixo /api/.',
+      command: 'curl -i http://localhost/api/users',
+      commandParts: [{ text: '/api/users', meaning: 'URI vista pelo nginx' }, { text: '/v1/users', meaning: 'URI que o backend receberá' }],
+      lookFor: 'No palco, siga nginx → backend app. O corpo JSON confirma path /v1/users.',
+      verify: requested((event) => event.response?.backend === 'app' && event.response.body.includes('/v1/users'))
+    },
+    {
+      id: 'forwarded-headers',
+      title: 'Preserve o contexto original',
+      explanation: 'proxy_set_header Host informa qual site o cliente pediu. X-Forwarded-For carrega o IP original, pois para o backend a conexão veio do nginx. Esses headers permitem logs e regras corretas na aplicação.'
+    },
+    {
+      id: 'slash-rule',
+      title: 'A barra final muda a URI',
+      explanation: 'proxy_pass http://app/v1/ possui uma URI e substitui /api/. Já proxy_pass http://app, sem parte de URI, repassaria /api/users inteiro. Essa pequena barra é uma fonte clássica de bugs.'
+    }
+  ],
+  'mais-de-um-backend': [
+    {
+      id: 'pool-concept',
+      title: 'Um nome representa várias máquinas',
+      explanation: 'upstream api agrupa três peers. proxy_pass usa o nome do grupo, e nginx escolhe um peer saudável para cada requisição. Assim a URL pública não muda quando a infraestrutura cresce.'
+    },
+    {
+      id: 'weighted-a',
+      title: 'Observe o peso',
+      explanation: 'api-a tem weight=2, então aparece duas vezes no ciclo de distribuição. Faça a primeira requisição e anote qual backend respondeu.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'O palco deve encaminhar para api-a:80.',
+      verify: requested((event) => event.response?.backend === 'api-a:80')
+    },
+    {
+      id: 'second-slot',
+      title: 'O peso mantém api-a por mais um turno',
+      explanation: 'Uma segunda vaga do ciclo também pertence a api-a. Isso não significa afinidade com o usuário; é apenas a proporção configurada.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'Compare o backend com a primeira requisição.',
+      verify: (events) => events.filter((event) => event.response?.backend === 'api-a:80').length >= 2
+    },
+    {
+      id: 'skip-failed',
+      title: 'Pule o peer indisponível',
+      explanation: 'api-b está fora do ar. No próximo avanço do round-robin, nginx não consegue usá-lo e tenta um peer saudável. O visitante recebe resposta de api-c em vez de um erro.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'O backend escolhido deve ser api-c:80; api-b não responde.',
+      verify: requested((event) => event.response?.backend === 'api-c:80')
+    }
+  ],
+  'cache-e-limites': [
+    {
+      id: 'protect-backend',
+      title: 'Resolva dois problemas diferentes',
+      explanation: 'Cache reduz trabalho repetido: uma resposta pronta evita chamar o backend. Limite de requisições controla quantas tentativas uma origem pode fazer em pouco tempo. Um melhora desempenho; o outro protege capacidade.'
+    },
+    {
+      id: 'cache-miss',
+      title: 'A primeira resposta ainda não está guardada',
+      explanation: 'Na primeira requisição, a chave não existe no cache. nginx chama catalog, devolve a resposta e guarda uma cópia. Isso é um MISS esperado, não um erro.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'Encontre X-Cache-Status: MISS e o passo que chama o backend catalog.',
+      verify: requested((event) => event.response?.headers['X-Cache-Status'] === 'MISS')
+    },
+    {
+      id: 'cache-hit',
+      title: 'A segunda resposta vem do cache',
+      explanation: 'A mesma chave agora tem uma resposta pronta. nginx responde sem pedir novo trabalho ao backend.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'X-Cache-Status muda para HIT; no palco, o backend não é chamado.',
+      verify: requested((event) => event.response?.headers['X-Cache-Status'] === 'HIT')
+    },
+    {
+      id: 'rate-limit',
+      title: 'Exceda a pequena rajada permitida',
+      explanation: 'A regra aceita a taxa normal mais burst=1. Uma terceira requisição imediata passa desse espaço e é recusada antes de alcançar catalog. limit_req_status configurou 429 no lugar do 503 padrão.',
+      command: 'curl -i http://localhost/',
+      lookFor: 'A resposta deve ser 429 Too Many Requests e o trace deve dizer que o limite foi excedido.',
+      verify: gotStatus(429)
+    }
+  ]
+}
+
+export const lessons: Lesson[] = lessonDefinitions.map((lesson) => ({
+  ...lesson,
+  steps: guides[lesson.id] ?? []
+}))
+
 export function lessonById(id: string) {
   return lessons.find((lesson) => lesson.id === id) ?? lessons[0]!
 }
 
-export type { Lesson, LessonEvent } from './types'
+export type { Lesson, LessonEvent, LessonStep } from './types'

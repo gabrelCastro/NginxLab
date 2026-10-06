@@ -12,6 +12,7 @@ export interface TerminalEntry {
 
 interface LabState {
   lessonIndex: number
+  lessonRunId: number
   session: TerminalState
   events: LessonEvent[]
   terminalEntries: TerminalEntry[]
@@ -28,7 +29,10 @@ interface LabState {
   togglePlaying: () => void
   stepTrace: (amount?: number) => void
   finishTrace: () => void
+  markLessonComplete: (id: string) => void
 }
+
+const completedStorageKey = 'nginxlearn:guided-completed'
 
 function sessionFor(index: number) {
   const lesson = lessons[index]!
@@ -37,7 +41,7 @@ function sessionFor(index: number) {
 
 function readCompleted() {
   try {
-    return JSON.parse(localStorage.getItem('nginxlearn:completed') ?? '[]') as string[]
+    return JSON.parse(localStorage.getItem(completedStorageKey) ?? '[]') as string[]
   } catch {
     return []
   }
@@ -45,9 +49,10 @@ function readCompleted() {
 
 export const useLab = create<LabState>((set, get) => ({
   lessonIndex: 0,
+  lessonRunId: 0,
   session: sessionFor(0),
   events: [],
-  terminalEntries: [{ id: 0, command: 'help', output: 'Digite help para ver os comandos. Comece com curl -i http://localhost/.' }],
+  terminalEntries: [{ id: 0, command: 'help', output: 'Comece pelo passo a passo à direita. Digite help quando quiser consultar os comandos disponíveis.' }],
   commandHistory: [],
   response: undefined,
   errorLine: undefined,
@@ -70,25 +75,19 @@ export const useLab = create<LabState>((set, get) => ({
       ...(result.response ? { response: result.response } : {})
     }
     const events = [...get().events, event]
-    const lesson = lessons[get().lessonIndex]!
-    const completed = lesson.objectives.every((objective) => objective.verify(events))
-    const completedLessons = completed && !get().completedLessons.includes(lesson.id)
-      ? [...get().completedLessons, lesson.id]
-      : get().completedLessons
-    if (completed) localStorage.setItem('nginxlearn:completed', JSON.stringify(completedLessons))
     const check = result.action === 'test' || result.action === 'reload' ? checkConfig(result.state.draftSource) : undefined
     set({
       session: result.state,
       events,
-      completedLessons,
       terminalEntries: [...get().terminalEntries, { id: result.state.commandCount, command: trimmed, output: result.output }],
       commandHistory: [...get().commandHistory, trimmed],
       ...(result.response ? { response: result.response, visibleTraceSteps: 1, playing: true } : {}),
       ...(check && !check.ok && check.errorLine ? { errorLine: check.errorLine } : { errorLine: undefined })
     })
   },
-  selectLesson: (index) => set({
+  selectLesson: (index) => set((state) => ({
     lessonIndex: index,
+    lessonRunId: state.lessonRunId + 1,
     session: sessionFor(index),
     events: [],
     terminalEntries: [],
@@ -97,12 +96,18 @@ export const useLab = create<LabState>((set, get) => ({
     errorLine: undefined,
     visibleTraceSteps: 0,
     playing: true
-  }),
+  })),
   resetLesson: () => get().selectLesson(get().lessonIndex),
   togglePlaying: () => set((state) => ({ playing: !state.playing })),
   stepTrace: (amount = 1) => set((state) => ({
     visibleTraceSteps: Math.max(1, Math.min(state.response?.trace.length ?? 0, state.visibleTraceSteps + amount)),
     playing: false
   })),
-  finishTrace: () => set((state) => ({ visibleTraceSteps: state.response?.trace.length ?? 0, playing: false }))
+  finishTrace: () => set((state) => ({ visibleTraceSteps: state.response?.trace.length ?? 0, playing: false })),
+  markLessonComplete: (id) => set((state) => {
+    if (state.completedLessons.includes(id)) return state
+    const completedLessons = [...state.completedLessons, id]
+    localStorage.setItem(completedStorageKey, JSON.stringify(completedLessons))
+    return { completedLessons }
+  })
 }))

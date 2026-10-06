@@ -20,6 +20,17 @@ export interface LessonArticle {
   links: { label: string; href: string }[]
 }
 
+export interface LessonStep {
+  id: string
+  title: string
+  explanation: string
+  command?: string
+  commandParts?: { text: string; meaning: string }[]
+  lookFor?: string
+  applyEdit?: { search: string; replace: string; label: string }
+  verify?: (events: LessonEvent[]) => boolean
+}
+
 export interface Lesson {
   id: string
   number: number
@@ -29,6 +40,7 @@ export interface Lesson {
   initialConfig: string
   files: FileSeed
   backends?: SimulatedBackend[]
+  steps: LessonStep[]
   objectives: LessonObjective[]
   hints: string[]
   article: LessonArticle

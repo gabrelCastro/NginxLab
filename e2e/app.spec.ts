@@ -10,7 +10,7 @@ async function openWithoutConsoleErrors(page: Page) {
   return () => expect(errors, 'browser console errors').toEqual([])
 }
 
-test('opens the workspace and copies the suggested command', async ({ page, context }) => {
+test('opens the workspace and copies the command when its guided step arrives', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'http://127.0.0.1:5180' })
   const assertNoErrors = await openWithoutConsoleErrors(page)
   await expect(page.getByRole('link', { name: /NginxLearn/ })).toBeVisible()
@@ -18,20 +18,37 @@ test('opens the workspace and copies the suggested command', async ({ page, cont
   await expect(page.getByRole('heading', { name: 'Terminal' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Caminho da requisição' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '1. Um servidor que entrega arquivos' })).toBeVisible()
+  await expect(page.getByText('Siga o passo a passo à direita')).toBeVisible()
+  await page.getByRole('button', { name: /Entendi, continuar/ }).click()
+  await page.getByRole('button', { name: /Entendi, continuar/ }).click()
   await expect(page.getByText('curl -i http://localhost/', { exact: true })).toHaveCSS('user-select', 'text')
-  await page.getByLabel('Copiar comando curl').click()
-  await expect(page.getByLabel('Comando copiado')).toBeVisible()
+  await page.getByLabel('Copiar comando do passo 3').click()
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('curl -i http://localhost/')
   assertNoErrors()
 })
 
-test('runs curl, renders and copies the selectable trace', async ({ page, context }) => {
+test('guides a beginner before completing the first lesson', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'http://127.0.0.1:5180' })
   const assertNoErrors = await openWithoutConsoleErrors(page)
   const terminal = page.getByLabel('Comando do terminal')
+
+  // A command entered too early is useful feedback, but it does not skip the lesson.
   await terminal.fill('curl -i http://localhost/')
   await terminal.press('Enter')
   await expect(page.getByText('HTTP/1.1 200 OK')).toBeVisible()
+  await expect(page.getByText('Lição concluída')).not.toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Conheça a bancada' })).toBeVisible()
+
+  await page.getByRole('button', { name: /Entendi, continuar/ }).click()
+  await expect(page.getByRole('heading', { name: 'Leia a configuração como uma frase' })).toBeVisible()
+  await page.getByRole('button', { name: /Entendi, continuar/ }).click()
+  await expect(page.getByRole('heading', { name: 'Faça sua primeira requisição' })).toBeVisible()
+  await page.getByRole('button', { name: 'Executar no terminal' }).click()
+  await expect(page.getByRole('heading', { name: 'Entenda o que voltou' })).toBeVisible()
+  await page.getByRole('button', { name: /Entendi, continuar/ }).click()
+  await expect(page.getByRole('heading', { name: 'Compare com um arquivo ausente' })).toBeVisible()
+  await page.getByRole('button', { name: 'Executar no terminal' }).click()
+  await expect(page.getByText('HTTP/1.1 404 Not Found')).toBeVisible()
   await expect(page.getByText('Lição concluída')).toBeVisible()
   await expect(page.getByText('server localhost escolhido')).toBeVisible()
   await expect(page.getByLabel('Copiar trace')).toBeVisible()
