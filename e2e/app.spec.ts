@@ -10,13 +10,18 @@ async function openWithoutConsoleErrors(page: Page) {
   return () => expect(errors, 'browser console errors').toEqual([])
 }
 
-test('opens the complete learning workspace', async ({ page }) => {
+test('opens the workspace and copies the suggested command', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'http://127.0.0.1:5180' })
   const assertNoErrors = await openWithoutConsoleErrors(page)
   await expect(page.getByRole('link', { name: /NginxLearn/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'nginx.conf' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Terminal' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Caminho da requisição' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '1. Um servidor que entrega arquivos' })).toBeVisible()
+  await expect(page.getByText('curl -i http://localhost/', { exact: true })).toHaveCSS('user-select', 'text')
+  await page.getByLabel('Copiar comando curl').click()
+  await expect(page.getByLabel('Comando copiado')).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('curl -i http://localhost/')
   assertNoErrors()
 })
 

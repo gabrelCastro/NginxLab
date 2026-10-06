@@ -504,11 +504,36 @@ button {
   margin: 7px 0;
   font-size: 11px;
   line-height: 1.55;
+  user-select: text;
 }
 
 .empty-stage code {
   color: var(--color-accent);
   font-family: var(--font-mono);
+  user-select: text;
+}
+
+.empty-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  padding: 8px 9px 8px 12px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 8px;
+  background: var(--color-panel);
+}
+
+.empty-command button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 1px solid rgb(73 212 157 / 0.25);
+  border-radius: 5px;
+  background: rgb(73 212 157 / 0.07);
+  color: var(--color-accent);
+  font-size: 8px;
 }
 
 .empty-orbit {
@@ -518,6 +543,7 @@ button {
   border: 1px solid rgb(73 212 157 / 0.09);
   border-radius: 50%;
   animation: orbit 12s linear infinite;
+  pointer-events: none;
 }
 
 @keyframes orbit {

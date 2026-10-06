@@ -32,19 +32,7 @@ export function RequestStage() {
   const copyTrace = async () => {
     if (!response) return
     const text = response.trace.map((trace) => `${trace.title}\n${trace.detail}${trace.line ? `\nlinha ${trace.line}` : ''}`).join('\n\n')
-    try {
-      if (!navigator.clipboard) throw new Error('Clipboard API unavailable')
-      await navigator.clipboard.writeText(text)
-    } catch {
-      const field = document.createElement('textarea')
-      field.value = text
-      field.style.position = 'fixed'
-      field.style.opacity = '0'
-      document.body.append(field)
-      field.select()
-      document.execCommand('copy')
-      field.remove()
-    }
+    await copyText(text)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1_500)
   }
@@ -80,5 +68,30 @@ export function RequestStage() {
 }
 
 function EmptyStage() {
-  return <div className="empty-stage"><div className="empty-orbit"><span /></div><Globe2 size={24} /><h3>Nenhuma requisição ainda</h3><p>Use <code>curl -i http://localhost/</code> no terminal. Cada decisão aparecerá aqui.</p></div>
+  const [copied, setCopied] = useState(false)
+  const command = 'curl -i http://localhost/'
+
+  const copyCommand = async () => {
+    await copyText(command)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1_500)
+  }
+
+  return <div className="empty-stage"><div className="empty-orbit"><span /></div><Globe2 size={24} /><h3>Nenhuma requisição ainda</h3><p>Use este comando no terminal. Cada decisão aparecerá aqui.</p><div className="empty-command"><code>{command}</code><button type="button" aria-label={copied ? 'Comando copiado' : 'Copiar comando curl'} onClick={() => void copyCommand()}>{copied ? <Check size={13} /> : <Copy size={13} />}<span>{copied ? 'copiado' : 'copiar'}</span></button></div></div>
+}
+
+async function copyText(text: string) {
+  try {
+    if (!navigator.clipboard) throw new Error('Clipboard API unavailable')
+    await navigator.clipboard.writeText(text)
+  } catch {
+    const field = document.createElement('textarea')
+    field.value = text
+    field.style.position = 'fixed'
+    field.style.opacity = '0'
+    document.body.append(field)
+    field.select()
+    document.execCommand('copy')
+    field.remove()
+  }
 }
