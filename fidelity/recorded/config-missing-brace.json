@@ -1,0 +1,7 @@
+{
+  "id": "missing-brace",
+  "output": [
+    "nginx: [emerg] unexpected end of file, expecting \"}\" in /etc/nginx/nginx.conf:6",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}

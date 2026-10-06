@@ -1,0 +1,7 @@
+{
+  "id": "unexpected-brace",
+  "output": [
+    "nginx: [emerg] unexpected \"}\" in /etc/nginx/nginx.conf:3",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}

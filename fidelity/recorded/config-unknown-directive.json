@@ -1,0 +1,7 @@
+{
+  "id": "unknown-directive",
+  "output": [
+    "nginx: [emerg] unknown directive \"lisen\" in /etc/nginx/nginx.conf:4",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}

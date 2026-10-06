@@ -1,0 +1,7 @@
+{
+  "id": "wrong-context",
+  "output": [
+    "nginx: [emerg] \"listen\" directive is not allowed here in /etc/nginx/nginx.conf:3",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "listen-no-args",
+  "output": [
+    "nginx: [emerg] invalid number of arguments in \"listen\" directive in /etc/nginx/nginx.conf:4",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}

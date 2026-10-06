@@ -1,0 +1,7 @@
+{
+  "id": "duplicate-location",
+  "output": [
+    "nginx: [emerg] duplicate location \"/\" in /etc/nginx/nginx.conf:5",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}

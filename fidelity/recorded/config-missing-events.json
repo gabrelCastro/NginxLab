@@ -1,0 +1,8 @@
+{
+  "id": "missing-events",
+  "output": [
+    "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+    "nginx: [emerg] no \"events\" section in configuration",
+    "nginx: configuration file /etc/nginx/nginx.conf test failed"
+  ]
+}
