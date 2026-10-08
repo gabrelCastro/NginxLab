@@ -1,0 +1,1967 @@
+{
+  "checks": [
+    {
+      "id": "fidelity-valid",
+      "config": "events {}\nhttp { server { listen 80; } }",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "fidelity-missing-semicolon",
+      "config": "events {}\nhttp {\n server {\n  listen 80\n  root /data;\n }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] invalid parameter \"root\" in /etc/nginx/nginx.conf:5",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 5
+    },
+    {
+      "id": "fidelity-unknown-directive",
+      "config": "events {}\nhttp {\n server {\n  lisen 80;\n }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] unknown directive \"lisen\" in /etc/nginx/nginx.conf:4",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 4
+    },
+    {
+      "id": "fidelity-unexpected-brace",
+      "config": "events {}\nhttp { server { listen 80; } }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] unexpected \"}\" in /etc/nginx/nginx.conf:3",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 3
+    },
+    {
+      "id": "fidelity-missing-brace",
+      "config": "events {}\nhttp {\n server {\n  listen 80;\n }\n",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] unexpected end of file, expecting \"}\" in /etc/nginx/nginx.conf:6",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 6
+    },
+    {
+      "id": "fidelity-wrong-context",
+      "config": "events {}\nhttp {\n listen 80;\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] \"listen\" directive is not allowed here in /etc/nginx/nginx.conf:3",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 3
+    },
+    {
+      "id": "fidelity-listen-no-args",
+      "config": "events {}\nhttp {\n server {\n  listen;\n }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] invalid number of arguments in \"listen\" directive in /etc/nginx/nginx.conf:4",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 4
+    },
+    {
+      "id": "fidelity-duplicate-location",
+      "config": "events {}\nhttp {\n server {\n  location / {}\n  location / {}\n }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] duplicate location \"/\" in /etc/nginx/nginx.conf:5",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 5
+    },
+    {
+      "id": "fidelity-missing-events",
+      "config": "http {}",
+      "ok": false,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: [emerg] no \"events\" section in configuration",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-initial",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-alias",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo/;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-alias-no-slash",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-wrong-root",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      root /data;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-rewrite-break",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      rewrite ^/imagens/(.*)$ /$1 break;\n      root /data/catalogo;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-return-cheat",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      return 200 \"caneca\";\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-broken-home",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo/;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-proxy",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      proxy_pass http://127.0.0.1:9000;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-exact-location",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location = /imagens/caneca.svg {\n      alias /data/catalogo/caneca.svg;\n    }\n    location /outro/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "catalog-syntax-error",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo\n    }\n  }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] unexpected \"}\" in /etc/nginx/nginx.conf:10",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 10
+    },
+    {
+      "id": "catalog-unknown-directive",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      aliass /data/catalogo/;\n    }\n  }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] unknown directive \"aliass\" in /etc/nginx/nginx.conf:9",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 9
+    },
+    {
+      "id": "catalog-unsupported",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    sendfile on;\n    location /imagens/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] \"sendfile\" directive is not allowed here in /etc/nginx/nginx.conf:8",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 8
+    },
+    {
+      "id": "transfer-initial",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /midia/ {\n      root /opt/produtos;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "transfer-alias",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /midia/ {\n      alias /opt/produtos/;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "transfer-prefix-stop",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location ^~ /midia/ {\n      alias /opt/produtos/;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "transfer-regex",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location ~* \\.svg$ {\n      root /opt/produtos;\n      rewrite ^/midia/(.*)$ /$1 break;\n    }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "integration-initial",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { root /data/catalogo; }\n    location / { try_files $uri $uri/ =404; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "integration-fixed",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "integration-only-alias",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ =404; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "integration-only-route",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { root /data/catalogo; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "integration-lost-default",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name padrao.test;\n  }\n  server {\n    listen 80;\n    server_name loja-velha.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "integration-wildcard",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name *.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "extra-1",
+      "config": "events {}\nhttp {\n  server {\n    listen 8080;\n    server_name a.test;\n    location / { return 301 https://$host$request_uri; }\n  }\n  server {\n    listen 80;\n    server_name www.*;\n    rewrite ^/antigo/(.*)$ /novo/$1 permanent;\n    return 200 \"www $uri\";\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "extra-2",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    root /data;\n    location / { index nada.html; }\n    location = /exato { return 204; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "extra-3",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    location /x { root /data; }\n    location /x { root /outro; }\n  }\n}",
+      "ok": false,
+      "output": [
+        "nginx: [emerg] duplicate location \"/x\" in /etc/nginx/nginx.conf:6",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": 6
+    },
+    {
+      "id": "extra-4",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 ssl_like;\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "extra-5",
+      "config": "http {\n  server { listen 80; }\n}",
+      "ok": false,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: [emerg] no \"events\" section in configuration",
+        "nginx: configuration file /etc/nginx/nginx.conf test failed"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "extra-6",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    location / {\n      return 200 \"texto com \\\"aspas\\\" e # cerquilha\";\n    }\n  }\n}\n# fim",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    },
+    {
+      "id": "extra-7",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    root /vazio;\n    location / { try_files $uri /faltando; }\n  }\n}",
+      "ok": true,
+      "output": [
+        "nginx: the configuration file /etc/nginx/nginx.conf syntax is ok",
+        "nginx: configuration file /etc/nginx/nginx.conf test is successful"
+      ],
+      "errorLine": null
+    }
+  ],
+  "requests": [
+    {
+      "id": "fidelity-server-and-location-order",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name default.test;\n    return 200 \"default\";\n  }\n  server {\n    listen 80;\n    server_name app.test;\n    location / { return 200 \"prefix\"; add_header X-Location prefix; }\n    location = / { return 200 \"exact\"; add_header X-Location exact; }\n    location ~ \\.php$ { return 200 \"regex-first\"; add_header X-Location regex-first; }\n    location ~ \\.php { return 200 \"regex-second\"; add_header X-Location regex-second; }\n    location ^~ /static/ { return 200 \"static\"; add_header X-Location static; }\n  }\n}",
+      "files": {},
+      "requests": [
+        {
+          "path": "/",
+          "host": "app.test"
+        },
+        {
+          "path": "/post.php",
+          "host": "app.test"
+        },
+        {
+          "path": "/static/app.php",
+          "host": "app.test"
+        },
+        {
+          "path": "/",
+          "host": "unknown.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "exact",
+          "filePath": null,
+          "serverId": "app.test",
+          "location": "= /",
+          "headers": {
+            "X-Location": "exact"
+          }
+        },
+        {
+          "status": 200,
+          "body": "regex-first",
+          "filePath": null,
+          "serverId": "app.test",
+          "location": "~ \\.php$",
+          "headers": {
+            "X-Location": "regex-first"
+          }
+        },
+        {
+          "status": 200,
+          "body": "static",
+          "filePath": null,
+          "serverId": "app.test",
+          "location": "^~ /static/",
+          "headers": {
+            "X-Location": "static"
+          }
+        },
+        {
+          "status": 200,
+          "body": "default",
+          "filePath": null,
+          "serverId": "default.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "fidelity-static-root-alias-index-try-files",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name files.test;\n    root /data/site;\n    index home.html;\n    location /assets/ { alias /data/public/; add_header X-Location alias; }\n    location /app/ { try_files $uri $uri/ /index.html; add_header X-Location spa; }\n  }\n}",
+      "files": {
+        "/data/site/home.html": {
+          "content": "home"
+        },
+        "/data/public/logo.txt": {
+          "content": "logo"
+        },
+        "/data/site/index.html": {
+          "content": "spa"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "files.test"
+        },
+        {
+          "path": "/assets/logo.txt",
+          "host": "files.test"
+        },
+        {
+          "path": "/app/missing",
+          "host": "files.test"
+        },
+        {
+          "path": "/missing",
+          "host": "files.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "home",
+          "filePath": "/data/site/home.html",
+          "serverId": "files.test",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "logo",
+          "filePath": "/data/public/logo.txt",
+          "serverId": "files.test",
+          "location": "/assets/",
+          "headers": {
+            "X-Location": "alias"
+          }
+        },
+        {
+          "status": 200,
+          "body": "spa",
+          "filePath": "/data/site/index.html",
+          "serverId": "files.test",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data/site/missing",
+          "serverId": "files.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-initial",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data/catalogo/imagens/caneca.svg",
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-alias",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo/;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-alias-no-slash",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-wrong-root",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      root /data;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data/imagens/caneca.svg",
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-rewrite-break",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      rewrite ^/imagens/(.*)$ /$1 break;\n      root /data/catalogo;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-return-cheat",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      return 200 \"caneca\";\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "caneca",
+          "filePath": null,
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-broken-home",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo/;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 403,
+          "body": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/srv",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-proxy",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      proxy_pass http://127.0.0.1:9000;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 502,
+          "body": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": null,
+          "serverId": "localhost",
+          "location": "/imagens/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-exact-location",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location = /imagens/caneca.svg {\n      alias /data/catalogo/caneca.svg;\n    }\n    location /outro/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "localhost",
+          "location": "= /imagens/caneca.svg",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "catalog-syntax-error",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": []
+    },
+    {
+      "id": "catalog-unknown-directive",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      aliass /data/catalogo/;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": []
+    },
+    {
+      "id": "catalog-unsupported",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    sendfile on;\n    location /imagens/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": []
+    },
+    {
+      "id": "transfer-initial",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /midia/ {\n      root /opt/produtos;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/opt/produtos/vaso.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/midia/vaso.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/opt/produtos/midia/vaso.svg",
+          "serverId": "localhost",
+          "location": "/midia/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "transfer-alias",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /midia/ {\n      alias /opt/produtos/;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/opt/produtos/vaso.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/midia/vaso.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "filePath": "/opt/produtos/vaso.svg",
+          "serverId": "localhost",
+          "location": "/midia/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "transfer-prefix-stop",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location ^~ /midia/ {\n      alias /opt/produtos/;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/opt/produtos/vaso.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/midia/vaso.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "filePath": "/opt/produtos/vaso.svg",
+          "serverId": "localhost",
+          "location": "^~ /midia/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "transfer-regex",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location ~* \\.svg$ {\n      root /opt/produtos;\n      rewrite ^/midia/(.*)$ /$1 break;\n    }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/opt/produtos/vaso.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "localhost"
+        },
+        {
+          "path": "/midia/vaso.svg",
+          "host": "localhost"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "localhost",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "filePath": "/opt/produtos/vaso.svg",
+          "serverId": "localhost",
+          "location": "~* \\.svg$",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "integration-initial",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { root /data/catalogo; }\n    location / { try_files $uri $uri/ =404; }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "loja.test"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "loja.test"
+        },
+        {
+          "path": "/dashboard",
+          "host": "loja.test"
+        },
+        {
+          "path": "/",
+          "host": "desconhecido.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data/catalogo/imagens/caneca.svg",
+          "serverId": "loja.test",
+          "location": "/imagens/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/srv/loja/dashboard",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "site desconhecido",
+          "filePath": null,
+          "serverId": "padrao.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "integration-fixed",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "loja.test"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "loja.test"
+        },
+        {
+          "path": "/dashboard",
+          "host": "loja.test"
+        },
+        {
+          "path": "/",
+          "host": "desconhecido.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "loja.test",
+          "location": "/imagens/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "site desconhecido",
+          "filePath": null,
+          "serverId": "padrao.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "integration-only-alias",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ =404; }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "loja.test"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "loja.test"
+        },
+        {
+          "path": "/dashboard",
+          "host": "loja.test"
+        },
+        {
+          "path": "/",
+          "host": "desconhecido.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "loja.test",
+          "location": "/imagens/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/srv/loja/dashboard",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "site desconhecido",
+          "filePath": null,
+          "serverId": "padrao.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "integration-only-route",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { root /data/catalogo; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "loja.test"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "loja.test"
+        },
+        {
+          "path": "/dashboard",
+          "host": "loja.test"
+        },
+        {
+          "path": "/",
+          "host": "desconhecido.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data/catalogo/imagens/caneca.svg",
+          "serverId": "loja.test",
+          "location": "/imagens/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "site desconhecido",
+          "filePath": null,
+          "serverId": "padrao.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "integration-lost-default",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name padrao.test;\n  }\n  server {\n    listen 80;\n    server_name loja-velha.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "loja.test"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "loja.test"
+        },
+        {
+          "path": "/dashboard",
+          "host": "loja.test"
+        },
+        {
+          "path": "/",
+          "host": "desconhecido.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "loja.test",
+          "location": "/imagens/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "loja.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 404,
+          "body": "<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/usr/share/nginx/html",
+          "serverId": "padrao.test",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "integration-wildcard",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name *.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "requests": [
+        {
+          "path": "/",
+          "host": "loja.test"
+        },
+        {
+          "path": "/imagens/caneca.svg",
+          "host": "loja.test"
+        },
+        {
+          "path": "/dashboard",
+          "host": "loja.test"
+        },
+        {
+          "path": "/",
+          "host": "desconhecido.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "*.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "filePath": "/data/catalogo/caneca.svg",
+          "serverId": "*.test",
+          "location": "/imagens/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "*.test",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>",
+          "filePath": "/srv/loja/index.html",
+          "serverId": "*.test",
+          "location": "/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "extra-1",
+      "config": "events {}\nhttp {\n  server {\n    listen 8080;\n    server_name a.test;\n    location / { return 301 https://$host$request_uri; }\n  }\n  server {\n    listen 80;\n    server_name www.*;\n    rewrite ^/antigo/(.*)$ /novo/$1 permanent;\n    return 200 \"www $uri\";\n  }\n}",
+      "files": {},
+      "requests": [
+        {
+          "path": "/qualquer?x=1",
+          "host": "a.test",
+          "port": 8080
+        },
+        {
+          "path": "/antigo/pagina",
+          "host": "www.loja.test"
+        },
+        {
+          "path": "/./a/../b//c",
+          "host": "www.loja.test"
+        },
+        {
+          "path": "/",
+          "host": "a.test"
+        }
+      ],
+      "responses": [
+        {
+          "status": 301,
+          "body": "",
+          "filePath": null,
+          "serverId": "a.test",
+          "location": "/",
+          "headers": {
+            "Location": "https://a.test/qualquer?x=1"
+          }
+        },
+        {
+          "status": 301,
+          "body": "",
+          "filePath": null,
+          "serverId": "www.*",
+          "location": null,
+          "headers": {
+            "Location": "/novo/pagina"
+          }
+        },
+        {
+          "status": 200,
+          "body": "www /b/c",
+          "filePath": null,
+          "serverId": "www.*",
+          "location": null,
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "www /",
+          "filePath": null,
+          "serverId": "www.*",
+          "location": null,
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "extra-2",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    root /data;\n    location / { index nada.html; }\n    location = /exato { return 204; }\n  }\n}",
+      "files": {
+        "/data/pasta/arquivo.txt": {
+          "content": "oi"
+        },
+        "/data/index.html": {
+          "content": "raiz"
+        }
+      },
+      "requests": [
+        {
+          "path": "/pasta/"
+        },
+        {
+          "path": "/exato"
+        },
+        {
+          "path": "/",
+          "method": "HEAD"
+        },
+        {
+          "path": "/pasta/arquivo.txt"
+        }
+      ],
+      "responses": [
+        {
+          "status": 403,
+          "body": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data/pasta",
+          "serverId": "server-1",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 204,
+          "body": "",
+          "filePath": null,
+          "serverId": "server-1",
+          "location": "= /exato",
+          "headers": {}
+        },
+        {
+          "status": 403,
+          "body": "<html>\r\n<head><title>403 Forbidden</title></head>\r\n<body>\r\n<center><h1>403 Forbidden</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": "/data",
+          "serverId": "server-1",
+          "location": "/",
+          "headers": {}
+        },
+        {
+          "status": 200,
+          "body": "oi",
+          "filePath": "/data/pasta/arquivo.txt",
+          "serverId": "server-1",
+          "location": "/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "extra-6",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    location / {\n      return 200 \"texto com \\\"aspas\\\" e # cerquilha\";\n    }\n  }\n}\n# fim",
+      "files": {},
+      "requests": [
+        {
+          "path": "/"
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "body": "texto com \"aspas\" e # cerquilha",
+          "filePath": null,
+          "serverId": "server-1",
+          "location": "/",
+          "headers": {}
+        }
+      ]
+    },
+    {
+      "id": "extra-7",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    root /vazio;\n    location / { try_files $uri /faltando; }\n  }\n}",
+      "files": {},
+      "requests": [
+        {
+          "path": "/x"
+        }
+      ],
+      "responses": [
+        {
+          "status": 500,
+          "body": "<html>\r\n<head><title>500 Internal Server Error</title></head>\r\n<body>\r\n<center><h1>500 Internal Server Error</h1></center>\r\n<hr><center>nginx/1.27.5</center>\r\n</body>\r\n</html>\r\n",
+          "filePath": null,
+          "serverId": "server-1",
+          "location": "/",
+          "headers": {}
+        }
+      ]
+    }
+  ],
+  "missions": [
+    {
+      "id": "catalog-initial",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": true,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /data/catalogo/caneca.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "catalog-alias",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo/;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "catalog-alias-no-slash",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "catalog-wrong-root",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      root /data;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": true,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /data/catalogo/caneca.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "catalog-rewrite-break",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      rewrite ^/imagens/(.*)$ /$1 break;\n      root /data/catalogo;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "catalog-return-cheat",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      return 200 \"caneca\";\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": true,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /data/catalogo/caneca.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "catalog-broken-home",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo/;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": false,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "A página inicial precisa continuar vindo de /srv/loja/index.html."
+      }
+    },
+    {
+      "id": "catalog-proxy",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      proxy_pass http://127.0.0.1:9000;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": true,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /data/catalogo/caneca.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "catalog-exact-location",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location = /imagens/caneca.svg {\n      alias /data/catalogo/caneca.svg;\n    }\n    location /outro/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "catalog-syntax-error",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      alias /data/catalogo\n    }\n  }\n}",
+      "checkOk": false,
+      "expected": null
+    },
+    {
+      "id": "catalog-unknown-directive",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ {\n      aliass /data/catalogo/;\n    }\n  }\n}",
+      "checkOk": false,
+      "expected": null
+    },
+    {
+      "id": "catalog-unsupported",
+      "variant": "catalog",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    sendfile on;\n    location /imagens/ {\n      root /data/catalogo;\n    }\n  }\n}",
+      "checkOk": false,
+      "expected": null
+    },
+    {
+      "id": "transfer-initial",
+      "variant": "transfer",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /midia/ {\n      root /opt/produtos;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": true,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /opt/produtos/vaso.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "transfer-alias",
+      "variant": "transfer",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location /midia/ {\n      alias /opt/produtos/;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "transfer-prefix-stop",
+      "variant": "transfer",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location ^~ /midia/ {\n      alias /opt/produtos/;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "transfer-regex",
+      "variant": "transfer",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /srv/loja;\n    index index.html;\n    location ~* \\.svg$ {\n      root /opt/produtos;\n      rewrite ^/midia/(.*)$ /$1 break;\n    }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "integration-initial",
+      "variant": "integration",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { root /data/catalogo; }\n    location / { try_files $uri $uri/ =404; }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": false,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /data/catalogo/caneca.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "integration-fixed",
+      "variant": "integration",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "integration-only-alias",
+      "variant": "integration",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ =404; }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": true,
+        "route": false,
+        "fallback": true,
+        "message": "A rota /dashboard precisa entregar index.html sem quebrar os recursos reais."
+      }
+    },
+    {
+      "id": "integration-only-route",
+      "variant": "integration",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { root /data/catalogo; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": false,
+        "route": true,
+        "fallback": true,
+        "message": "A imagem ainda não vem de /data/catalogo/caneca.svg. Consulte o caminho no trace."
+      }
+    },
+    {
+      "id": "integration-lost-default",
+      "variant": "integration",
+      "config": "events {}\nhttp {\n  server {\n    listen 80;\n    server_name padrao.test;\n  }\n  server {\n    listen 80;\n    server_name loja-velha.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name loja.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": true,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": true,
+        "message": "Página, imagem, rota da aplicação e site padrão respondem corretamente."
+      }
+    },
+    {
+      "id": "integration-wildcard",
+      "variant": "integration",
+      "config": "events {}\nhttp {\n  server {\n    listen 80 default_server;\n    server_name padrao.test;\n    return 404 \"site desconhecido\";\n  }\n  server {\n    listen 80;\n    server_name *.test;\n    root /srv/loja;\n    index index.html;\n    location /imagens/ { alias /data/catalogo/; }\n    location / { try_files $uri $uri/ /index.html; }\n  }\n}",
+      "checkOk": true,
+      "expected": {
+        "ok": false,
+        "home": true,
+        "image": true,
+        "route": true,
+        "fallback": false,
+        "message": "Um Host desconhecido deve continuar chegando ao servidor padrão."
+      }
+    }
+  ]
+}

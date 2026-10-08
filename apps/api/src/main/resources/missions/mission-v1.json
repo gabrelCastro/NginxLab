@@ -1,0 +1,68 @@
+{
+  "scenarioVersion": "mission-v1",
+  "missions": {
+    "catalog": {
+      "title": "As imagens da loja sumiram",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "host": "localhost",
+      "homeFile": "/srv/loja/index.html",
+      "imageUri": "/imagens/caneca.svg",
+      "expectedFile": "/data/catalogo/caneca.svg",
+      "extraUri": null,
+      "expectedExtraFile": null,
+      "fallbackHost": null,
+      "expectedFallbackServer": null,
+      "expectedFallbackStatus": null
+    },
+    "transfer": {
+      "title": "Um novo produto, outro caminho",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/midia/vaso.svg\" alt=\"Vaso de cerâmica\"><h2>Vaso de cerâmica</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/opt/produtos/vaso.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#dce7d6\"/><path d=\"M90 60h60l-6 70q-4 28-24 28t-24-28z\" fill=\"#497e69\"/><path d=\"M120 66q-31-24-18-43 23 1 18 43m0 0q31-24 18-43-23 1-18 43\" fill=\"#65996b\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "host": "localhost",
+      "homeFile": "/srv/loja/index.html",
+      "imageUri": "/midia/vaso.svg",
+      "expectedFile": "/opt/produtos/vaso.svg",
+      "extraUri": null,
+      "expectedExtraFile": null,
+      "fallbackHost": null,
+      "expectedFallbackServer": null,
+      "expectedFallbackStatus": null
+    },
+    "integration": {
+      "title": "A loja voltou, mas duas rotas falham",
+      "files": {
+        "/srv/loja/index.html": {
+          "content": "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><style>body{margin:0;padding:28px;font:15px system-ui;background:#f7f4ef;color:#26352f}.brand{font-weight:800;letter-spacing:.09em;color:#497e69}h1{font-size:25px;margin:18px 0 7px}.card{max-width:270px;background:white;border:1px solid #e2dfd6;border-radius:15px;padding:15px;box-shadow:0 8px 30px #26352f12}img{display:block;width:100%;height:160px;object-fit:contain;background:#f0eee7;border-radius:9px}small{color:#68776c}</style></head><body><div class=\"brand\">VERDE & CO.</div><h1>Catálogo</h1><p>Produtos escolhidos para o seu dia.</p><div class=\"card\"><img src=\"{{IMAGE_SRC}}\" data-uri=\"/imagens/caneca.svg\" alt=\"Caneca artesanal\"><h2>Caneca artesanal</h2><small>Disponível na loja</small></div></body></html>"
+        },
+        "/data/catalogo/caneca.svg": {
+          "content": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 180\"><rect width=\"240\" height=\"180\" rx=\"18\" fill=\"#e9d9c0\"/><path d=\"M70 58h90v72q0 23-45 23T70 130z\" fill=\"#79533a\"/><path d=\"M160 75h22q25 0 13 26-7 14-35 15\" fill=\"none\" stroke=\"#79533a\" stroke-width=\"13\"/><path d=\"M95 48q-10-13 0-25m30 25q-10-13 0-25\" fill=\"none\" stroke=\"#fff8ef\" stroke-width=\"5\"/></svg>",
+          "contentType": "image/svg+xml"
+        }
+      },
+      "host": "loja.test",
+      "homeFile": "/srv/loja/index.html",
+      "imageUri": "/imagens/caneca.svg",
+      "expectedFile": "/data/catalogo/caneca.svg",
+      "extraUri": "/dashboard",
+      "expectedExtraFile": "/srv/loja/index.html",
+      "fallbackHost": "desconhecido.test",
+      "expectedFallbackServer": "padrao.test",
+      "expectedFallbackStatus": 404
+    }
+  }
+}

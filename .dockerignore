@@ -1,0 +1,8 @@
+node_modules
+dist
+test-results
+playwright-report
+apps/api/target
+.git
+deploy/backups
+*.tsbuildinfo

@@ -52,10 +52,11 @@ function recordRequests(testCase: (typeof requestCases)[number]) {
   }
 }
 
+// curl, e não o wget do BusyBox: o wget descarta o corpo de respostas 4xx/5xx.
 function fetchInsideContainer(container: string, host: string, path: string): RecordedResponse {
-  const result = spawnSync('docker', ['exec', container, 'wget', '-S', '-O', '-', '--header', `Host: ${host}`, `http://127.0.0.1${path}`], { encoding: 'utf8' })
+  const result = spawnSync('docker', ['exec', container, 'curl', '-s', '-D', '/dev/stderr', '-H', `Host: ${host}`, `http://127.0.0.1${path}`], { encoding: 'utf8' })
   const status = Number(result.stderr.match(/HTTP\/1\.1 (\d+)/)?.[1] ?? 0)
-  const headers = Object.fromEntries([...result.stderr.matchAll(/^  ([\w-]+): (.+)$/gm)]
+  const headers = Object.fromEntries([...result.stderr.matchAll(/^([\w-]+): (.+?)\r?$/gm)]
     .filter((match) => ['location', 'x-location'].includes(match[1]!.toLowerCase()))
     .map((match) => [canonicalHeader(match[1]!), match[2]!.trim()]))
   return { status, headers, body: result.stdout }

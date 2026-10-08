@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class GuestController {
 
     private final GuestIdentityService identityService;
+    private final AccountService accounts;
 
-    public GuestController(GuestIdentityService identityService) {
+    public GuestController(GuestIdentityService identityService, AccountService accounts) {
         this.identityService = identityService;
+        this.accounts = accounts;
     }
 
     @PostMapping("/guests")
@@ -29,7 +31,11 @@ public class GuestController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Learner> me(@AuthenticationPrincipal Learner learner) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(learner);
+    public ResponseEntity<Me> me(@AuthenticationPrincipal Learner learner) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(new Me(learner.id(), learner.kind(), learner.createdAt(), accounts.email(learner.id()).orElse(null)));
+    }
+
+    public record Me(java.util.UUID id, String kind, java.time.OffsetDateTime createdAt, String email) {
     }
 }

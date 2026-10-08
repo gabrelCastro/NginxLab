@@ -2,6 +2,7 @@ import { Check, ChevronDown, RotateCcw, Server } from 'lucide-react'
 import { lessons } from '../lessons'
 import { useLab } from '../store/useLab'
 import { CampaignMap } from './CampaignMap'
+import { SyncStatus } from './SyncStatus'
 
 export function TopBar() {
   const mode = useLab((state) => state.mode)
@@ -35,6 +36,7 @@ export function TopBar() {
         </div>
         <span>{completed.length}/{lessons.length}</span>
       </div>}
+      <SyncStatus />
       <button className="text-button" type="button" onClick={reset}><RotateCcw size={14} /> {mode === 'mission' ? 'Refazer missão' : 'Reiniciar'}</button>
     </header>
   )

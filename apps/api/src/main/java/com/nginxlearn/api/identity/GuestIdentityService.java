@@ -29,26 +29,42 @@ public class GuestIdentityService {
     @Transactional
     public GuestRegistration register() {
         UUID id = UUID.randomUUID();
-        byte[] secret = new byte[32];
-        secureRandom.nextBytes(secret);
-        String token = "ngl_" + Base64.getUrlEncoder().withoutPadding().encodeToString(secret);
-
         jdbcClient.sql("INSERT INTO learners (id, kind) VALUES (:id, 'GUEST')")
                 .param("id", id)
                 .update();
-        jdbcClient.sql("INSERT INTO guest_credentials (token_hash, learner_id) VALUES (:hash, :id)")
-                .param("hash", hash(token))
-                .param("id", id)
-                .update();
+        return new GuestRegistration(learner(id), issueToken(id, null));
+    }
 
-        Learner learner = jdbcClient.sql("SELECT id, kind, created_at FROM learners WHERE id = :id")
+    /** Novo token opaco para o aprendiz; o banco guarda apenas o hash. */
+    @Transactional
+    public String issueToken(UUID learnerId, OffsetDateTime expiresAt) {
+        byte[] secret = new byte[32];
+        secureRandom.nextBytes(secret);
+        String token = "ngl_" + Base64.getUrlEncoder().withoutPadding().encodeToString(secret);
+        jdbcClient.sql("INSERT INTO access_tokens (token_hash, learner_id, expires_at) VALUES (:hash, :id, :expiresAt)")
+                .param("hash", hash(token))
+                .param("id", learnerId)
+                .param("expiresAt", expiresAt)
+                .update();
+        return token;
+    }
+
+    @Transactional
+    public void revoke(String token) {
+        if (token != null && TOKEN_FORMAT.matcher(token).matches()) {
+            jdbcClient.sql("DELETE FROM access_tokens WHERE token_hash = :hash").param("hash", hash(token)).update();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Learner learner(UUID id) {
+        return jdbcClient.sql("SELECT id, kind, created_at FROM learners WHERE id = :id")
                 .param("id", id)
                 .query((rs, rowNum) -> new Learner(
                         rs.getObject("id", UUID.class),
                         rs.getString("kind"),
                         rs.getObject("created_at", OffsetDateTime.class)))
                 .single();
-        return new GuestRegistration(learner, token);
     }
 
     @Transactional(readOnly = true)
@@ -60,8 +76,8 @@ public class GuestIdentityService {
         return jdbcClient.sql("""
                 SELECT l.id, l.kind, l.created_at
                 FROM learners l
-                JOIN guest_credentials c ON c.learner_id = l.id
-                WHERE c.token_hash = :hash AND l.kind = 'GUEST'
+                JOIN access_tokens c ON c.learner_id = l.id
+                WHERE c.token_hash = :hash AND (c.expires_at IS NULL OR c.expires_at > now())
                 """)
                 .param("hash", hash(token))
                 .query((rs, rowNum) -> new Learner(
@@ -71,7 +87,7 @@ public class GuestIdentityService {
                 .optional();
     }
 
-    private static String hash(String token) {
+    static String hash(String token) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
             return HexFormat.of().formatHex(digest);

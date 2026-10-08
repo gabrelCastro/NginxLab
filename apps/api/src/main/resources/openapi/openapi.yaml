@@ -1,0 +1,321 @@
+openapi: 3.1.0
+info:
+  title: NginxLearn API
+  version: 1.0.0
+  description: |
+    Progresso do laboratório NginxLearn. O navegador executa o simulador; a API guarda
+    checkpoints com revisão otimista, reexecuta soluções de missões para verificá-las e
+    oferece contas opcionais para levar o progresso a outros navegadores.
+
+    Autenticação: `Authorization: Bearer <token>`. O token é opaco, retornado uma única
+    vez (visitante ou login) e guardado no servidor apenas como hash SHA-256.
+    Limites por janela respondem `429` com `Retry-After`.
+servers:
+  - url: /api/v1
+security:
+  - bearer: []
+tags:
+  - name: Identidade
+  - name: Checkpoints
+  - name: Missões
+paths:
+  /guests:
+    post:
+      tags: [Identidade]
+      summary: Cria um visitante anônimo
+      security: []
+      responses:
+        '201':
+          description: Visitante criado. Guarde o token; ele não é mostrado de novo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /me:
+    get:
+      tags: [Identidade]
+      summary: Aprendiz autenticado
+      responses:
+        '200':
+          description: Visitante ou conta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /account:
+    post:
+      tags: [Identidade]
+      summary: Protege o progresso do visitante atual com e-mail e senha
+      description: O aprendiz mantém o mesmo ID; checkpoints e tentativas continuam dele.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '201':
+          description: Conta criada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [learner, email]
+                properties:
+                  learner: { $ref: '#/components/schemas/Learner' }
+                  email: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '409':
+          description: '`ALREADY_ACCOUNT` ou `EMAIL_TAKEN`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /sessions:
+    post:
+      tags: [Identidade]
+      summary: Entra em uma conta neste navegador
+      description: Cria um token novo, válido por 180 dias. Falhas sempre respondem a mesma mensagem.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '201':
+          description: Sessão criada
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/TokenResponse'
+                  - type: object
+                    required: [email]
+                    properties:
+                      email: { type: string }
+        '401':
+          description: '`INVALID_CREDENTIALS`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /sessions/current:
+    delete:
+      tags: [Identidade]
+      summary: Sai neste navegador
+      description: Revoga apenas o token usado na requisição.
+      responses:
+        '204': { description: Token revogado }
+  /checkpoints:
+    get:
+      tags: [Checkpoints]
+      summary: Lista os checkpoints do aprendiz
+      responses:
+        '200':
+          description: Checkpoints
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Checkpoint' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /checkpoints/{scope}/{scopeId}:
+    parameters:
+      - { name: scope, in: path, required: true, schema: { type: string, enum: [CHAPTER, MISSION] } }
+      - { name: scopeId, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 100 } }
+    get:
+      tags: [Checkpoints]
+      summary: Lê um checkpoint
+      responses:
+        '200':
+          description: Checkpoint
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Checkpoint' }
+        '404': { description: Inexistente }
+    put:
+      tags: [Checkpoints]
+      summary: Cria ou atualiza com revisão otimista
+      description: |
+        `expectedRevision: 0` cria. Para atualizar, envie a revisão recebida. Se o servidor tiver
+        outra revisão, nada é gravado e a resposta `409` traz o estado atual em `current`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckpointWrite' }
+      responses:
+        '200':
+          description: Atualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Checkpoint' }
+        '201':
+          description: Criado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Checkpoint' }
+        '400': { description: Payload inválido }
+        '409':
+          description: Revisão divergente; nada foi sobrescrito
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [code, current]
+                properties:
+                  code: { const: REVISION_CONFLICT }
+                  current:
+                    oneOf:
+                      - $ref: '#/components/schemas/Checkpoint'
+                      - type: 'null'
+        '413': { description: Payload acima de 1 MiB }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /missions/attempts:
+    get:
+      tags: [Missões]
+      summary: Vereditos das tentativas do aprendiz (até 200, mais recentes primeiro)
+      responses:
+        '200':
+          description: Tentativas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Attempt' }
+  /missions/{missionId}/attempts:
+    parameters:
+      - { name: missionId, in: path, required: true, schema: { type: string, enum: [catalog, transfer, integration] } }
+    post:
+      tags: [Missões]
+      summary: Envia uma solução para verificação no servidor
+      description: |
+        O servidor executa `nginx -t` e as requisições da missão com o simulador Java sobre o
+        cenário versionado. O veredito nunca depende do que o cliente relata. Reenviar o mesmo
+        `attemptId` devolve o resultado já registrado (`200`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attemptId, scenarioVersion, config]
+              properties:
+                attemptId: { type: string, format: uuid }
+                scenarioVersion: { const: mission-v1 }
+                config: { type: string, maxLength: 65536, description: Configuração ativa (após reload) }
+                clientReport: { type: [object, 'null'], description: Contexto informado pelo navegador; não afeta o veredito }
+      responses:
+        '200':
+          description: Tentativa já registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Attempt' }
+        '201':
+          description: Verificada agora
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Attempt' }
+        '400': { description: Versão de cenário não suportada ou corpo inválido }
+        '404': { description: Missão desconhecida }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /openapi.yaml:
+    get:
+      summary: Este documento
+      security: []
+      responses:
+        '200': { description: OpenAPI 3.1 }
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido, revogado ou expirado
+    RateLimited:
+      description: Limite excedido
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Error:
+      description: Erro com código estável
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+    Learner:
+      type: object
+      required: [id, kind, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [GUEST, ACCOUNT] }
+        createdAt: { type: string, format: date-time }
+    Me:
+      allOf:
+        - $ref: '#/components/schemas/Learner'
+        - type: object
+          properties:
+            email: { type: [string, 'null'] }
+    TokenResponse:
+      type: object
+      required: [learner, token]
+      properties:
+        learner: { $ref: '#/components/schemas/Learner' }
+        token: { type: string, pattern: '^ngl_[A-Za-z0-9_-]{43}$' }
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 10, description: 'Até 72 bytes em UTF-8' }
+    CheckpointWrite:
+      type: object
+      required: [schemaVersion, scenarioVersion, expectedRevision, payload]
+      properties:
+        schemaVersion: { type: integer, minimum: 1 }
+        scenarioVersion: { type: string, maxLength: 64, examples: [chapters-v1, mission-v1] }
+        expectedRevision: { type: integer, minimum: 0 }
+        payload:
+          type: object
+          description: Checkpoint do simulador. Em capítulos, `completed` é informado pelo navegador e não é verificado.
+    Checkpoint:
+      type: object
+      required: [scope, scopeId, schemaVersion, scenarioVersion, revision, payload, updatedAt]
+      properties:
+        scope: { type: string, enum: [CHAPTER, MISSION] }
+        scopeId: { type: string }
+        schemaVersion: { type: integer }
+        scenarioVersion: { type: string }
+        revision: { type: integer, minimum: 1 }
+        payload: { type: object }
+        updatedAt: { type: string, format: date-time }
+    Attempt:
+      type: object
+      required: [attemptId, missionId, scenarioVersion, status, result, createdAt]
+      properties:
+        attemptId: { type: string, format: uuid }
+        missionId: { type: string }
+        scenarioVersion: { type: string }
+        status: { type: string, enum: [VERIFIED, REJECTED] }
+        result:
+          type: object
+          required: [ok, configValid, message]
+          properties:
+            ok: { type: boolean }
+            configValid: { type: boolean }
+            home: { type: boolean }
+            image: { type: boolean }
+            route: { type: boolean }
+            fallback: { type: boolean }
+            message: { type: string }
+        createdAt: { type: string, format: date-time }

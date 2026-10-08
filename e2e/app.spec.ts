@@ -1,4 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
+import { FakeApi } from './fakeApi'
+
+// Todo teste roda com o backend de progresso disponível, como em produção.
+test.beforeEach(async ({ page }) => {
+  await new FakeApi().install(page)
+})
 
 async function openWithoutConsoleErrors(page: Page) {
   const errors: string[] = []
@@ -198,6 +204,7 @@ test('investigates the shop incident, resumes, and solves the transfer challenge
   await expect.poll(() => page.frameLocator('iframe[title="Loja simulada"]').locator('img').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
   await page.getByRole('button', { name: 'Validar solução' }).click()
   await expect(page.getByRole('heading', { name: 'Você restaurou a imagem' })).toBeVisible()
+  await expect(page.getByText('Verificado pelo servidor', { exact: false })).toBeVisible()
   await page.getByRole('button', { name: 'Começar desafio final' }).click()
   await page.getByRole('button', { name: 'Abrir ou atualizar a loja' }).click()
   await expect(page.getByText('GET /midia/vaso.svg')).toBeVisible()
@@ -232,8 +239,10 @@ test('investigates the shop incident, resumes, and solves the transfer challenge
   await expect(page.locator('.shop-resources').getByRole('button', { name: '404 GET / · Host: desconhecido.test' })).toBeVisible()
   await page.getByRole('button', { name: 'Validar solução' }).click()
   await expect(page.getByRole('heading', { name: 'Incidente resolvido' })).toBeVisible()
+  await expect(page.getByText('Verificado pelo servidor', { exact: false })).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Incidente resolvido' })).toBeVisible()
+  await expect(page.getByText('Verificado pelo servidor', { exact: false })).toBeVisible()
   assertNoErrors()
 })
 
@@ -313,5 +322,38 @@ test('restores cache and request-limit state in the sale chapter', async ({ page
   await terminal.fill('curl -i http://localhost/')
   await terminal.press('Enter')
   await expect(page.getByText('HTTP/1.1 429 Too Many Requests')).toBeVisible()
+  assertNoErrors()
+})
+
+test('resizes the panels by dragging and keyboard, and remembers the sizes', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const assertNoErrors = await openWithoutConsoleErrors(page)
+  const editorPanel = page.locator('.editor-panel')
+  const lessonPanel = page.locator('.lesson-panel')
+  const before = (await editorPanel.boundingBox())!
+
+  const handle = page.getByRole('separator', { name: 'Largura do editor' })
+  const box = (await handle.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + 200)
+  await page.mouse.down()
+  await page.mouse.move(box.x + 200, box.y + 200, { steps: 6 })
+  await page.mouse.up()
+  const wider = (await editorPanel.boundingBox())!
+  expect(wider.width).toBeGreaterThan(before.width + 150)
+
+  const rows = page.getByRole('separator', { name: 'Altura do editor e do terminal' })
+  const editorHeight = (await editorPanel.boundingBox())!.height
+  await rows.focus()
+  await rows.press('Shift+ArrowDown')
+  await expect.poll(async () => (await editorPanel.boundingBox())!.height).toBeGreaterThan(editorHeight + 40)
+
+  const lessonWidth = (await lessonPanel.boundingBox())!.width
+  await page.getByRole('separator', { name: 'Largura do painel da lição' }).press('Shift+ArrowLeft')
+  await expect.poll(async () => (await lessonPanel.boundingBox())!.width).toBeGreaterThan(lessonWidth + 60)
+
+  await page.reload()
+  await expect.poll(async () => (await page.locator('.editor-panel').boundingBox())!.width).toBeGreaterThan(before.width + 150)
+  await page.getByRole('separator', { name: 'Largura do editor' }).dblclick()
+  await expect.poll(async () => Math.round((await page.locator('.editor-panel').boundingBox())!.width)).toBe(Math.round(before.width))
   assertNoErrors()
 })

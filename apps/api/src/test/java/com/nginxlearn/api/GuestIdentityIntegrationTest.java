@@ -58,7 +58,7 @@ class GuestIdentityIntegrationTest {
         HttpResponse<String> invalid = send("GET", "/api/v1/me", "ngl_" + "a".repeat(43));
         assertThat(invalid.statusCode()).isEqualTo(401);
 
-        Integer plainTokenCount = jdbcClient.sql("SELECT count(*) FROM guest_credentials WHERE token_hash = :token")
+        Integer plainTokenCount = jdbcClient.sql("SELECT count(*) FROM access_tokens WHERE token_hash = :token")
                 .param("token", token)
                 .query(Integer.class)
                 .single();

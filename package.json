@@ -7,14 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
-    "lint": "oxlint src fidelity e2e vite.config.ts playwright.config.ts",
+    "lint": "oxlint src fidelity e2e vite.config.ts playwright.config.ts playwright.stack.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
     "e2e": "npm run build && playwright test",
     "check": "npm run typecheck && npm run test && npm run lint && npm run build && npm run e2e",
     "fidelity:record": "tsx fidelity/record.ts",
-    "fidelity:check": "tsx fidelity/check-recordings.ts"
+    "fidelity:check": "tsx fidelity/check-recordings.ts",
+    "contract:update": "UPDATE_CONTRACT=1 vitest run fidelity/serverContract.test.ts",
+    "e2e:stack": "playwright test -c playwright.stack.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

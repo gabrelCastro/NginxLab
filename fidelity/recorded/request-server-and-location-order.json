@@ -1,9 +1,31 @@
 {
   "id": "server-and-location-order",
   "responses": [
-    { "status": 200, "headers": { "X-Location": "exact" }, "body": "exact" },
-    { "status": 200, "headers": { "X-Location": "regex-first" }, "body": "regex-first" },
-    { "status": 200, "headers": { "X-Location": "static" }, "body": "static" },
-    { "status": 200, "headers": {}, "body": "default" }
+    {
+      "status": 200,
+      "headers": {
+        "X-Location": "exact"
+      },
+      "body": "exact"
+    },
+    {
+      "status": 200,
+      "headers": {
+        "X-Location": "regex-first"
+      },
+      "body": "regex-first"
+    },
+    {
+      "status": 200,
+      "headers": {
+        "X-Location": "static"
+      },
+      "body": "static"
+    },
+    {
+      "status": 200,
+      "headers": {},
+      "body": "default"
+    }
   ]
 }

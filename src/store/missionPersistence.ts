@@ -59,7 +59,7 @@ export function readMission(): { saved?: SavedMission; storageAvailable: boolean
   }
 }
 
-function isSavedMission(value: unknown): value is SavedMission {
+export function isSavedMission(value: unknown): value is SavedMission {
   if (!value || typeof value !== 'object') return false
   const item = value as Partial<SavedMission>
   if (item.version !== 1 || (item.variant !== 'catalog' && item.variant !== 'transfer' && item.variant !== 'integration')) return false
@@ -113,6 +113,8 @@ export function saveMission(saved: SavedMission) {
     return false
   }
 }
+
+export const missionStorageKey = key
 
 export function readLastMode(): 'lesson' | 'mission' {
   try { return localStorage.getItem(modeKey) === 'mission' ? 'mission' : 'lesson' } catch { return 'lesson' }

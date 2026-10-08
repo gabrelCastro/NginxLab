@@ -1,0 +1,24 @@
+package com.nginxlearn.api.web;
+
+import org.springframework.http.HttpStatus;
+
+/** Erro de negócio com um código estável que o front-end pode tratar. */
+public class ApiException extends RuntimeException {
+
+    private final HttpStatus status;
+    private final String code;
+
+    public ApiException(HttpStatus status, String code, String message) {
+        super(message, null, false, false);
+        this.status = status;
+        this.code = code;
+    }
+
+    public HttpStatus status() {
+        return status;
+    }
+
+    public String code() {
+        return code;
+    }
+}

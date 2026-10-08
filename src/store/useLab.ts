@@ -2,10 +2,11 @@ import { create } from 'zustand'
 import { lessons, type LessonEvent } from '../lessons'
 import { missionScenarios, validateMission, type MissionStage, type MissionValidation, type MissionVariant } from '../missions/catalog'
 import { checkConfig } from '../sim/check'
+import { recordAttempt } from '../sync/attempts'
 import { createTerminalState, executeCommand, type TerminalState } from '../sim/terminal'
 import type { SimulatedResponse } from '../sim/request'
-import { readLastMode, readMission, restoreMissionSession, saveLastMode, saveMission, type SavedMission } from './missionPersistence'
-import { emptyGuide, readLastLessonIndex, readLessonCheckpoints, restoreLesson, saveLastLessonIndex, saveLessonCheckpoints, type GuideProgress, type SavedLesson } from './lessonPersistence'
+import { missionStorageKey, readLastMode, readMission, restoreMissionSession, saveLastMode, saveMission, type SavedMission } from './missionPersistence'
+import { emptyGuide, readLastLessonIndex, readLessonCheckpoints, lessonStorageKey, restoreLesson, saveLastLessonIndex, saveLessonCheckpoint, type GuideProgress, type SavedLesson } from './lessonPersistence'
 
 export interface TerminalEntry {
   id: number
@@ -53,6 +54,8 @@ interface LabState {
   storageAvailable: boolean
   responseSource: string | undefined
   traceFocus: { line: number; source: string } | undefined
+  externalNotice: string | undefined
+  dismissExternalNotice: () => void
   setDraft: (source: string) => void
   runCommand: (command: string) => void
   selectLesson: (index: number) => void
@@ -81,6 +84,7 @@ const loadedMission = typeof localStorage === 'undefined' ? { storageAvailable: 
 const savedMission = loadedMission.saved
 const loadedLessons = typeof localStorage === 'undefined' ? { items: {} as Record<string, SavedLesson>, storageAvailable: false } : readLessonCheckpoints()
 let lessonCheckpointCache = loadedLessons.items
+let missionCheckpoint = savedMission
 const initialLessonIndex = typeof localStorage === 'undefined' ? 0 : readLastLessonIndex()
 const initialLesson = lessonCheckpointCache[lessons[initialLessonIndex]!.id]
 const initialMode = savedMission && readLastMode() === 'mission' ? 'mission' : 'lesson'
@@ -103,6 +107,46 @@ function readCompleted() {
   }
 }
 
+function saveCompleted(completedLessons: string[]) {
+  try { localStorage.setItem(completedStorageKey, JSON.stringify(completedLessons)) } catch { /* Progresso mantido nesta sessão. */ }
+}
+
+function lessonWorkspace(saved: SavedLesson | undefined, index: number) {
+  return {
+    session: saved ? restoreLesson(saved, index) : sessionFor(index),
+    guide: saved?.guide ?? emptyGuide(),
+    events: saved?.events ?? [], terminalEntries: saved?.terminalEntries ?? [], commandHistory: saved?.commandHistory ?? [],
+    response: saved?.response ?? undefined, responseSource: saved?.responseSource ?? undefined, traceFocus: undefined, errorLine: undefined,
+    visibleTraceSteps: saved?.response?.trace.length ?? 0, playing: !saved?.response
+  }
+}
+
+function missionProgress(saved: SavedMission) {
+  return {
+    missionVariant: saved.variant, missionStage: saved.stage,
+    missionPrediction: saved.prediction, missionPredictionExplored: saved.predictionExplored,
+    missionHintCount: saved.hintCount, missionPrimaryHintCount: saved.primaryHintCount,
+    missionReloadCount: saved.reloadCount, missionHomeProofReload: saved.homeProofReload ?? undefined,
+    missionImageProofReload: saved.imageProofReload ?? undefined, missionExtraProofReload: saved.extraProofReload ?? undefined,
+    missionFallbackProofReload: saved.fallbackProofReload ?? undefined, missionIntegrationCompletions: saved.integrationCompletions ?? 0,
+    missionAttempts: saved.attempts, missionHomeResponse: saved.homeResponse ?? undefined,
+    missionImageResponse: saved.imageResponse ?? undefined, missionExtraResponse: saved.extraResponse ?? undefined,
+    missionFallbackResponse: saved.fallbackResponse ?? undefined, missionHomeSource: saved.homeSource ?? undefined,
+    missionImageSource: saved.imageSource ?? undefined, missionExtraSource: saved.extraSource ?? undefined,
+    missionFallbackSource: saved.fallbackSource ?? undefined, missionValidation: saved.validation ?? undefined,
+    missionCatalogSource: saved.catalogSource ?? undefined
+  }
+}
+
+function missionWorkspace(saved: SavedMission) {
+  return {
+    session: restoreMissionSession(saved),
+    terminalEntries: saved.terminalEntries, commandHistory: saved.commandHistory, response: saved.response ?? undefined,
+    responseSource: saved.responseSource ?? undefined, events: [], traceFocus: undefined, errorLine: undefined,
+    visibleTraceSteps: saved.response ? saved.response.trace.length : 0, playing: false
+  }
+}
+
 export const useLab = create<LabState>((set, get) => ({
   mode: initialMode,
   lessonIndex: initialLessonIndex,
@@ -114,6 +158,8 @@ export const useLab = create<LabState>((set, get) => ({
   response: initialMode === 'mission' ? savedMission?.response ?? undefined : initialLesson?.response ?? undefined,
   responseSource: initialMode === 'mission' ? savedMission?.responseSource ?? undefined : initialLesson?.responseSource ?? undefined,
   traceFocus: undefined,
+  externalNotice: undefined,
+  dismissExternalNotice: () => set({ externalNotice: undefined }),
   errorLine: undefined,
   visibleTraceSteps: 0,
   playing: true,
@@ -179,17 +225,10 @@ export const useLab = create<LabState>((set, get) => ({
       ...(check && !check.ok && check.errorLine ? { errorLine: check.errorLine } : { errorLine: undefined })
     })
   },
-  selectLesson: (index) => set((state) => {
-    const saved = lessonCheckpointCache[lessons[index]!.id]
-    return {
-      mode: 'lesson', lessonIndex: index, lessonRunId: state.lessonRunId + 1,
-      session: saved ? restoreLesson(saved, index) : sessionFor(index),
-      guide: saved?.guide ?? emptyGuide(),
-      events: saved?.events ?? [], terminalEntries: saved?.terminalEntries ?? [], commandHistory: saved?.commandHistory ?? [],
-      response: saved?.response ?? undefined, responseSource: saved?.responseSource ?? undefined, traceFocus: undefined, errorLine: undefined,
-      visibleTraceSteps: saved?.response?.trace.length ?? 0, playing: !saved?.response
-    }
-  }),
+  selectLesson: (index) => set((state) => ({
+    mode: 'lesson', lessonIndex: index, lessonRunId: state.lessonRunId + 1,
+    ...lessonWorkspace(lessonCheckpointCache[lessons[index]!.id], index)
+  })),
   resetLesson: () => {
     if (get().mode === 'mission') { get().restartMission(); return }
     const index = get().lessonIndex
@@ -204,30 +243,13 @@ export const useLab = create<LabState>((set, get) => ({
   markLessonComplete: (id) => set((state) => {
     if (state.completedLessons.includes(id)) return state
     const completedLessons = [...state.completedLessons, id]
-    try { localStorage.setItem(completedStorageKey, JSON.stringify(completedLessons)) } catch { /* Progresso mantido nesta sessão. */ }
+    saveCompleted(completedLessons)
     return { completedLessons }
   }),
   openMission: () => {
     const saved = readMission().saved
-    if (saved) {
-      set({
-        mode: 'mission', missionVariant: saved.variant, missionStage: saved.stage,
-        missionPrediction: saved.prediction, missionPredictionExplored: saved.predictionExplored,
-        missionHintCount: saved.hintCount, missionPrimaryHintCount: saved.primaryHintCount,
-        missionReloadCount: saved.reloadCount, missionHomeProofReload: saved.homeProofReload ?? undefined,
-        missionImageProofReload: saved.imageProofReload ?? undefined, missionExtraProofReload: saved.extraProofReload ?? undefined,
-        missionFallbackProofReload: saved.fallbackProofReload ?? undefined, missionIntegrationCompletions: saved.integrationCompletions ?? 0,
-        missionAttempts: saved.attempts, missionHomeResponse: saved.homeResponse ?? undefined,
-        missionImageResponse: saved.imageResponse ?? undefined, missionExtraResponse: saved.extraResponse ?? undefined,
-        missionFallbackResponse: saved.fallbackResponse ?? undefined, missionHomeSource: saved.homeSource ?? undefined,
-        missionImageSource: saved.imageSource ?? undefined, missionExtraSource: saved.extraSource ?? undefined,
-        missionFallbackSource: saved.fallbackSource ?? undefined, missionValidation: saved.validation ?? undefined,
-        missionCatalogSource: saved.catalogSource ?? undefined, session: restoreMissionSession(saved),
-        terminalEntries: saved.terminalEntries, commandHistory: saved.commandHistory, response: saved.response ?? undefined,
-        responseSource: saved.responseSource ?? undefined, events: [], traceFocus: undefined,
-        visibleTraceSteps: saved.response ? saved.response.trace.length : 0, playing: false
-      })
-    } else get().restartMission()
+    if (saved) set({ mode: 'mission', ...missionProgress(saved), ...missionWorkspace(saved) })
+    else get().restartMission()
   },
   restartMission: () => set((state) => ({
     mode: 'mission', missionVariant: 'catalog', missionStage: 'observe', missionPrediction: null, missionPredictionExplored: false, missionHintCount: 0, missionPrimaryHintCount: 0, missionReloadCount: 0, missionHomeProofReload: undefined, missionImageProofReload: undefined, missionExtraProofReload: undefined, missionFallbackProofReload: undefined, missionHomeResponse: undefined, missionImageResponse: undefined, missionExtraResponse: undefined, missionFallbackResponse: undefined, missionHomeSource: undefined, missionImageSource: undefined, missionExtraSource: undefined, missionFallbackSource: undefined, missionValidation: undefined, missionCatalogSource: undefined,
@@ -296,6 +318,9 @@ export const useLab = create<LabState>((set, get) => ({
     } else {
       validation = validateMission(state.session.activeSource, state.missionVariant)
     }
+    // A validação local dá o retorno imediato; o servidor reexecuta a mesma configuração
+    // e só ele marca a solução como verificada.
+    if (validation.ok) recordAttempt(state.missionVariant, state.session.activeSource, { prediction: state.missionPrediction, predictionExplored: state.missionPredictionExplored, hints: state.missionHintCount, primaryHints: state.missionPrimaryHintCount })
     set({
       missionValidation: validation,
       ...(validation.ok ? { missionStage: state.missionVariant === 'catalog' ? 'transfer-intro' : state.missionVariant === 'transfer' ? 'complete' : 'campaign-complete' } : {}),
@@ -330,20 +355,37 @@ export const useLab = create<LabState>((set, get) => ({
   updateGuide: (patch) => set((state) => ({ guide: { ...state.guide, ...patch } }))
 }))
 
+function lessonCheckpoint(id: string, state: Pick<LabState, 'session' | 'commandHistory' | 'terminalEntries' | 'events' | 'response' | 'responseSource' | 'guide'>): SavedLesson {
+  return {
+    version: 1, id, draftSource: state.session.draftSource, activeSource: state.session.activeSource,
+    commandHistory: state.commandHistory, terminalEntries: state.terminalEntries, events: state.events,
+    response: state.response ?? null, responseSource: state.responseSource ?? null,
+    accessLog: state.session.accessLog, errorLog: state.session.errorLog, commandCount: state.session.commandCount,
+    cache: [...state.session.runtime.cache.entries()], rateCounts: [...state.session.runtime.rateCounts.entries()], backendCursors: state.session.backendPool.snapshotCursors(), guide: state.guide
+  }
+}
+
+// Campos que não fazem parte de nenhum checkpoint: animação, foco e avisos da sessão.
+const transientFields = new Set<keyof LabState>(['visibleTraceSteps', 'playing', 'traceFocus', 'errorLine', 'storageAvailable', 'lessonRunId', 'externalNotice'])
+// Enquanto aplica o que outra aba gravou, esta aba não regrava o mesmo conteúdo.
+let applyingExternal = false
+let checkpointListener: (() => void) | undefined
+
+export function onCheckpointChange(listener: (() => void) | undefined) {
+  checkpointListener = listener
+}
+
 useLab.subscribe((state, previous) => {
   if (state.mode !== previous.mode) saveLastMode(state.mode)
+  if (applyingExternal) return
+  if (!(Object.keys(state) as (keyof LabState)[]).some((field) => !transientFields.has(field) && state[field] !== previous[field])) return
   if (state.mode === 'lesson') {
     if (state.lessonIndex !== previous.lessonIndex) saveLastLessonIndex(state.lessonIndex)
     const id = lessons[state.lessonIndex]!.id
-    const saved: SavedLesson = {
-      version: 1, id, draftSource: state.session.draftSource, activeSource: state.session.activeSource,
-      commandHistory: state.commandHistory, terminalEntries: state.terminalEntries, events: state.events,
-      response: state.response ?? null, responseSource: state.responseSource ?? null,
-      accessLog: state.session.accessLog, errorLog: state.session.errorLog, commandCount: state.session.commandCount,
-      cache: [...state.session.runtime.cache.entries()], rateCounts: [...state.session.runtime.rateCounts.entries()], backendCursors: state.session.backendPool.snapshotCursors(), guide: state.guide
-    }
+    const saved = lessonCheckpoint(id, state)
     lessonCheckpointCache = { ...lessonCheckpointCache, [id]: saved }
-    if (!saveLessonCheckpoints(lessonCheckpointCache) && state.storageAvailable) useLab.setState({ storageAvailable: false })
+    if (!saveLessonCheckpoint(saved) && state.storageAvailable) useLab.setState({ storageAvailable: false })
+    checkpointListener?.()
     return
   }
   if (state.mode !== 'mission') return
@@ -352,5 +394,76 @@ useLab.subscribe((state, previous) => {
     draftSource: state.session.draftSource, activeSource: state.session.activeSource, commandHistory: state.commandHistory, terminalEntries: state.terminalEntries, accessLog: state.session.accessLog, errorLog: state.session.errorLog, commandCount: state.session.commandCount,
     homeResponse: state.missionHomeResponse ?? null, imageResponse: state.missionImageResponse ?? null, extraResponse: state.missionExtraResponse ?? null, fallbackResponse: state.missionFallbackResponse ?? null, homeSource: state.missionHomeSource ?? null, imageSource: state.missionImageSource ?? null, extraSource: state.missionExtraSource ?? null, fallbackSource: state.missionFallbackSource ?? null, response: state.response ?? null, responseSource: state.responseSource ?? null, validation: state.missionValidation ?? null, catalogSource: state.missionCatalogSource ?? null
   }
+  missionCheckpoint = saved
   if (!saveMission(saved) && state.storageAvailable) useLab.setState({ storageAvailable: false })
+  checkpointListener?.()
 })
+
+// Leitura e aplicação de checkpoints para a sincronização com o servidor.
+export function currentCheckpoints() {
+  return { lessons: lessonCheckpointCache, mission: missionCheckpoint, completedLessons: useLab.getState().completedLessons }
+}
+
+export function freshLessonCheckpoint(id: string) {
+  const index = lessons.findIndex((lesson) => lesson.id === id)
+  if (index < 0) return undefined
+  return lessonCheckpoint(id, { session: sessionFor(index), commandHistory: [], terminalEntries: [], events: [], response: undefined, responseSource: undefined, guide: emptyGuide() })
+}
+
+export function applyLessonCheckpoint(saved: SavedLesson, completed: boolean) {
+  const index = lessons.findIndex((lesson) => lesson.id === saved.id)
+  if (index < 0) return false
+  lessonCheckpointCache = { ...lessonCheckpointCache, [saved.id]: saved }
+  saveLessonCheckpoint(saved)
+  const state = useLab.getState()
+  // Conclusões só se acumulam: a versão escolhida nunca apaga uma conclusão já vista.
+  const completedLessons = completed && !state.completedLessons.includes(saved.id) ? [...state.completedLessons, saved.id] : state.completedLessons
+  if (completedLessons !== state.completedLessons) saveCompleted(completedLessons)
+  if (state.mode === 'lesson' && state.lessonIndex === index) useLab.setState({ completedLessons, lessonRunId: state.lessonRunId + 1, ...lessonWorkspace(saved, index) })
+  else if (completedLessons !== state.completedLessons) useLab.setState({ completedLessons })
+  return true
+}
+
+export function applyMissionCheckpoint(saved: SavedMission) {
+  missionCheckpoint = saved
+  saveMission(saved)
+  const state = useLab.getState()
+  if (state.mode === 'mission') useLab.setState({ ...missionProgress(saved), ...missionWorkspace(saved), lessonRunId: state.lessonRunId + 1 })
+  else useLab.setState(missionProgress(saved))
+  return true
+}
+
+// Outra aba aberta gravou um checkpoint. Os demais capítulos são atualizados em silêncio;
+// o que está aberto aqui passa a mostrar a versão mais recente, com aviso.
+export function syncFromOtherTab(storageKey: string | null) {
+  if (storageKey === lessonStorageKey || storageKey === null) {
+    const { items } = readLessonCheckpoints()
+    const state = useLab.getState()
+    const openId = state.mode === 'lesson' ? lessons[state.lessonIndex]!.id : undefined
+    const changedOpen = openId !== undefined && items[openId] !== undefined && JSON.stringify(items[openId]) !== JSON.stringify(lessonCheckpointCache[openId])
+    lessonCheckpointCache = { ...lessonCheckpointCache, ...items }
+    if (changedOpen) external(() => useLab.setState({ lessonRunId: state.lessonRunId + 1, ...lessonWorkspace(items[openId]!, state.lessonIndex), externalNotice: 'Este capítulo foi alterado em outra aba aberta. A versão mais recente foi carregada aqui.' }))
+  }
+  if (storageKey === missionStorageKey || storageKey === null) {
+    const saved = readMission().saved
+    if (saved && JSON.stringify(saved) !== JSON.stringify(missionCheckpoint)) {
+      missionCheckpoint = saved
+      const state = useLab.getState()
+      if (state.mode === 'mission') external(() => useLab.setState({ ...missionProgress(saved), ...missionWorkspace(saved), lessonRunId: state.lessonRunId + 1, externalNotice: 'A missão foi alterada em outra aba aberta. A versão mais recente foi carregada aqui.' }))
+      else external(() => useLab.setState(missionProgress(saved)))
+    }
+  }
+  if (storageKey === completedStorageKey || storageKey === null) {
+    const state = useLab.getState()
+    const merged = [...new Set([...state.completedLessons, ...readCompleted()])]
+    if (merged.length !== state.completedLessons.length) external(() => useLab.setState({ completedLessons: merged }))
+  }
+  checkpointListener?.()
+}
+
+function external(apply: () => void) {
+  applyingExternal = true
+  try { apply() } finally { applyingExternal = false }
+}
+
+export const labStorageKeys = [lessonStorageKey, missionStorageKey, completedStorageKey]

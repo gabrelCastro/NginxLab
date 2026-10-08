@@ -166,8 +166,9 @@ function staticRequest(
   location: CompiledLocation | undefined,
   effective: DirectiveNode[],
   fs: VirtualFileSystem,
-  trace: TraceStep[]
-) {
+  trace: TraceStep[],
+  redirects = 0
+): SimulatedResponse {
   const root = directive(effective, 'root') ?? directive(server.directives, 'root')
   const alias = directive(effective, 'alias')
   const base = alias?.args[0] ?? root?.args[0] ?? '/usr/share/nginx/html'
@@ -195,10 +196,15 @@ function staticRequest(
         return response(code, errorPage(code), trace, { 'Content-Type': 'text/html' }, server, location, filePath)
       }
       if (last && candidate.startsWith('/')) {
+        // Como no nginx, um ciclo de redirecionamentos internos termina em 500.
+        if (redirects >= 10) {
+          trace.push({ kind: 'response', title: '500 ciclo de redirecionamento', detail: `rewrite or internal redirection cycle while internally redirecting to "${candidate}"`, status: 'error', line: tryFiles.line })
+          return response(500, errorPage(500), trace, { 'Content-Type': 'text/html' }, server, location)
+        }
         trace.push({ kind: 'filesystem', title: `fallback interno ${candidate}`, detail: `nginx reinicia a busca de location com a URI ${candidate}.`, status: 'match', line: tryFiles.line })
         const redirectedLocation = selectLocation(server.locations, candidate, trace)
         const redirectedDirectives = redirectedLocation?.directives ?? server.directives
-        return staticRequest(input, candidate, server, redirectedLocation, redirectedDirectives, fs, trace)
+        return staticRequest(input, candidate, server, redirectedLocation, redirectedDirectives, fs, trace, redirects + 1)
       }
       const candidateUri = candidate.replaceAll('$uri', uri)
       const candidatePath = normalizePath(`${base}/${candidateUri}`)

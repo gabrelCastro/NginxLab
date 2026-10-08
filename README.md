@@ -46,10 +46,21 @@ src/components/   editor, terminal, palco e painel pedagógico
 src/lessons/      lições declarativas e seus objetivos
 src/missions/     cenários de investigação e validação comportamental
 fidelity/         casos executados no nginx real e respostas gravadas
-apps/api/         backend Spring Boot e PostgreSQL (em implementação)
+apps/api/         backend Spring Boot e PostgreSQL
+deploy/           nginx de produção, Compose, CSP e backups
 ```
 
-A API Java 21 está sendo construída por fases. Já possui banco, identidade de visitante e checkpoints versionados; o simulador e o progresso do front-end ainda funcionam apenas no navegador até a integração da próxima fase. Veja [como executar e usar a API](apps/api/README.md).
+A API Java 21 guarda o progresso, verifica as soluções das missões e oferece contas opcionais. O simulador continua no navegador. Veja [como executar e usar a API](apps/api/README.md).
+
+### Progresso e sincronização
+
+O navegador continua sendo a primeira gravação: cada mudança vai para o `localStorage` na hora e o laboratório funciona sem servidor. Em paralelo, `src/sync/` cria um visitante anônimo, importa o progresso local existente uma única vez e envia as mudanças seguintes com revisão otimista. O indicador na barra superior só mostra “Sincronizado” depois da confirmação do servidor; antes disso aparece “Alterações não enviadas”, “Sincronizando…” ou “Offline”, com nova tentativa automática (2 s, 4 s… até 60 s) e imediata quando a conexão volta. Abas abertas ao mesmo tempo ficam coerentes entre si.
+
+Ao abrir o app, checkpoints mais novos do servidor substituem os locais apenas quando não há mudança local desde a última confirmação. Se os dois lados mudaram (um `409` ou uma divergência detectada na abertura), aquele checkpoint deixa de ser enviado e um aviso mostra as duas versões: manter a deste navegador ou usar a do servidor. A versão não escolhida fica guardada como cópia preservada e pode ser baixada em JSON.
+
+Soluções de missões são verificadas no servidor: a API Java reexecuta a configuração com o próprio simulador e responde “verificado” ou “não confirmado”, sem confiar no resultado do navegador (mesmo offline, a tentativa fica na fila). Conclusões de capítulos continuam informadas pelo navegador. No menu de sincronização, uma conta opcional (e-mail e senha) leva o progresso a outro navegador.
+
+Em desenvolvimento, o Vite encaminha `/api` para `http://localhost:8080` (mude com `NGINXLEARN_API_URL`). `VITE_API_BASE_URL` define outra base no build, e `VITE_API_BASE_URL=off` desativa a sincronização. Os E2E usam um backend falso em memória que segue o mesmo contrato e rodam sob a mesma CSP de produção; `npm run e2e:stack` testa a stack real. `npm run contract:update` regenera o contrato entre os simuladores TypeScript e Java depois de mudar `src/sim` ou as missões. Produção, backups e monitoramento: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 Toda a interface deriva do estado e do trace emitidos pelo simulador. Alterações no editor só entram em vigor depois de `nginx -s reload`.
 

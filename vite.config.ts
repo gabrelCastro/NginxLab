@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(() => ({
   plugins: [react(), tailwindcss()],
-  server: { port: 5174 },
+  // A API roda em outro processo; o proxy mantém a mesma origem e dispensa CORS.
+  server: { port: 5174, proxy: { '/api': process.env.NGINXLEARN_API_URL ?? 'http://localhost:8080' } },
   preview: { port: 4174 },
   test: {
     environment: 'node',

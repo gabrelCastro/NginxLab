@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 import com.nginxlearn.api.identity.Learner;
 
 @RestController
@@ -30,9 +32,11 @@ public class CheckpointController {
     private static final Pattern SCOPE_ID = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
 
     private final CheckpointService checkpointService;
+    private final MeterRegistry meters;
 
-    public CheckpointController(CheckpointService checkpointService) {
+    public CheckpointController(CheckpointService checkpointService, MeterRegistry meters) {
         this.checkpointService = checkpointService;
+        this.meters = meters;
     }
 
     @GetMapping
@@ -59,6 +63,8 @@ public class CheckpointController {
         CheckpointService.SaveResult result = checkpointService.save(
                 learner.id(), scope, scopeId,
                 request.schemaVersion(), request.scenarioVersion(), request.expectedRevision(), request.payload());
+        meters.counter("nginxlearn.checkpoint.writes", "scope", scope.name(),
+                "outcome", !result.saved() ? "conflict" : result.created() ? "created" : "updated").increment();
         if (!result.saved()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .cacheControl(CacheControl.noStore())

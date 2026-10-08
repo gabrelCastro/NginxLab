@@ -9,5 +9,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "fidelity", "src/sim"]
+  "include": ["vite.config.ts", "playwright.config.ts", "playwright.stack.config.ts", "fidelity", "src/sim", "src/missions/catalog.ts"]
 }

@@ -8,3 +8,5 @@ test-results/
 *.tsbuildinfo
 scripts/sandbox-check.mjs
 apps/api/target/
+deploy/.env
+deploy/backups/

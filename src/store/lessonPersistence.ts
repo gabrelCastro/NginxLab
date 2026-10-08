@@ -53,7 +53,7 @@ export function readLessonCheckpoints() {
   }
 }
 
-function isSavedLesson(value: unknown, id: string): value is SavedLesson {
+export function isSavedLesson(value: unknown, id: string): value is SavedLesson {
   if (!value || typeof value !== 'object') return false
   const saved = value as Partial<SavedLesson>
   if (saved.version !== 1 || saved.id !== id || typeof saved.draftSource !== 'string' || typeof saved.activeSource !== 'string' || !checkConfig(saved.activeSource).ok) return false
@@ -81,10 +81,24 @@ export function restoreLesson(saved: SavedLesson, index: number): TerminalState 
   return { ...session, draftSource: saved.draftSource, accessLog: saved.accessLog, errorLog: saved.errorLog, commandCount: saved.commandCount, runtime }
 }
 
-export function saveLessonCheckpoints(items: Record<string, SavedLesson>) {
-  memory = items
-  try { localStorage.setItem(key, JSON.stringify(items)); return true } catch { return false }
+// Grava só um capítulo. Os demais vêm do que está guardado agora, para não apagar
+// o que outra aba aberta salvou depois que esta carregou.
+export function saveLessonCheckpoint(saved: SavedLesson) {
+  memory = { ...memory, [saved.id]: saved }
+  try {
+    let stored: Record<string, unknown> = {}
+    try {
+      const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? '{}')
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) stored = parsed as Record<string, unknown>
+    } catch { /* Conteúdo ilegível é substituído. */ }
+    localStorage.setItem(key, JSON.stringify({ ...memory, ...stored, [saved.id]: saved }))
+    return true
+  } catch {
+    return false
+  }
 }
+
+export const lessonStorageKey = key
 
 export function readLastLessonIndex() {
   try {
