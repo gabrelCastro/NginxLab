@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/nginxlearn}
+    username: ${DB_USER:nginxlearn}
+    password: ${DB_PASSWORD:nginxlearn}

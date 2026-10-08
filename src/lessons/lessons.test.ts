@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { createTerminalState, executeCommand } from '../sim/terminal'
 import { lessons, type LessonEvent } from '.'
+import { campaign } from './campaign'
+
+it('gives every chapter a distinct store situation and goal', () => {
+  expect(Object.keys(campaign).sort()).toEqual(lessons.map((lesson) => lesson.id).sort())
+  for (const lesson of lessons) {
+    const chapter = campaign[lesson.id]!
+    expect(chapter.title.length).toBeGreaterThan(8)
+    expect(chapter.situation.length).toBeGreaterThan(40)
+    expect(chapter.goal.length).toBeGreaterThan(30)
+  }
+})
 
 describe('lesson walkthroughs', () => {
   for (const lesson of lessons) {

@@ -173,6 +173,15 @@ function staticRequest(
   const base = alias?.args[0] ?? root?.args[0] ?? '/usr/share/nginx/html'
   const suffix = alias && location ? uri.slice(location.pattern.length) : uri
   let filePath = normalizePath(`${base}/${suffix}`)
+  trace.push({
+    kind: 'filesystem',
+    title: alias ? `alias ${base}` : `root ${base}`,
+    detail: alias && location
+      ? `O prefixo ${location.pattern} foi substituído por ${base}; o nginx procurará ${filePath}.`
+      : `A URI ${uri} foi anexada a ${base}; o nginx procurará ${filePath}.`,
+    status: 'checking',
+    ...(alias ?? root ? { line: (alias ?? root)!.line } : {})
+  })
   const tryFiles = directive(effective, 'try_files')
   if (tryFiles) {
     const candidates = tryFiles.args

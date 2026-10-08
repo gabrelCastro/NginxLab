@@ -25,6 +25,15 @@ export class BackendPool {
     for (const backend of backends) this.backends.set(backend.address, backend)
   }
 
+  snapshotCursors() {
+    return [...this.cursors.entries()]
+  }
+
+  restoreCursors(entries: [string, number][]) {
+    this.cursors.clear()
+    for (const [group, cursor] of entries) this.cursors.set(group, cursor)
+  }
+
   request(group: string, addresses: string[], request: BackendRequest) {
     const weighted = addresses.flatMap((address) => {
       const [name, rawWeight] = address.split('|')

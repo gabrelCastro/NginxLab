@@ -15,6 +15,6 @@ export function Panel({ title, eyebrow, actions, children, className = '' }: { t
   )
 }
 
-export function IconButton({ label, onClick, children, active = false }: { label: string; onClick: () => void; children: ReactNode; active?: boolean }) {
-  return <button type="button" className={`icon-button ${active ? 'icon-button-active' : ''}`} aria-label={label} title={label} onClick={onClick}>{children}</button>
+export function IconButton({ label, onClick, children, active = false, disabled = false }: { label: string; onClick: () => void; children: ReactNode; active?: boolean; disabled?: boolean }) {
+  return <button type="button" className={`icon-button ${active ? 'icon-button-active' : ''}`} aria-label={label} title={label} onClick={onClick} disabled={disabled}>{children}</button>
 }

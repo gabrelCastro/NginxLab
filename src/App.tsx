@@ -1,12 +1,15 @@
 import { useEffect } from 'react'
 import { ConfigEditor } from './components/ConfigEditor'
 import { LessonPanel } from './components/LessonPanel'
+import { MissionPanel } from './components/MissionPanel'
+import { MissionStage } from './components/MissionStage'
 import { RequestStage } from './components/RequestStage'
 import { Terminal } from './components/Terminal'
 import { TopBar } from './components/TopBar'
 import { useLab } from './store/useLab'
 
 export function App() {
+  const mode = useLab((state) => state.mode)
   const reset = useLab((state) => state.resetLesson)
   const toggle = useLab((state) => state.togglePlaying)
   const step = useLab((state) => state.stepTrace)
@@ -27,5 +30,5 @@ export function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [reset, step, toggle])
 
-  return <div className="app-shell"><TopBar /><main id="main" className="workspace"><div className="left-column"><ConfigEditor /><Terminal /></div><RequestStage /><LessonPanel /></main></div>
+  return <div className="app-shell"><TopBar /><main id="main" className="workspace"><div className="left-column"><ConfigEditor /><Terminal /></div>{mode === 'mission' ? <><MissionStage /><MissionPanel /></> : <><RequestStage /><LessonPanel /></>}</main></div>
 }
